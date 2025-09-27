@@ -4,4 +4,4 @@ Archive: noble
 Suite: noble
 Codename: noble
 Architecture: amd64
-Component: organ-on-chip
+Component: feelpp
