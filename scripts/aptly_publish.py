@@ -202,7 +202,6 @@ def main():
         # Publish or switch
         publish_prefix = channel
         snapshot_opts = ["-distribution", distro, "-component", component]
-        add_opts = [f"-prefix={publish_prefix}", "-component", component]
         switch_opts = ["-component", component]
         if args.sign:
             sign_opts = ["-gpg-key", args.keyid]
@@ -215,36 +214,13 @@ def main():
             snapshot_opts += ["-skip-signing"]
             switch_opts += ["-skip-signing"]
 
-        target_dists = aptly_public / channel / "dists" / distro
-        component_root = target_dists / component
-        first_publish = not target_dists.exists()
-        component_exists = component_root.exists()
-
-        if first_publish:
-            logging.info("First-time publish %s/%s ...", channel, distro)
+        # Try to switch first (update existing publication), fallback to snapshot (first publish)
+        switch_result = aptly_run("publish", "switch", *switch_opts, distro, publish_prefix, snap, check=False)
+        if switch_result.returncode != 0:
+            logging.info("Switch failed, doing first-time publish %s/%s ...", channel, distro)
             aptly_run("publish", "snapshot", *snapshot_opts, snap, publish_prefix)
-        elif component_exists:
-            logging.info("Updating existing component via publish switch ...")
-            aptly_run("publish", "switch", *switch_opts, distro, publish_prefix, snap)
         else:
-            logging.info("Adding/updating component %s to existing publication ...", component)
-            # Try to add first, if it fails (already exists), replace it
-            add_result = aptly_run("publish", "source", "add", *add_opts, distro, snap, check=False)
-            if add_result.returncode != 0:
-                logging.info("Component already staged, replacing instead ...")
-                replace_opts = [f"-prefix={publish_prefix}", "-component", component]
-                # Note: replace doesn't support GPG flags, signing happens in publish update
-                aptly_run("publish", "source", "replace", *replace_opts, distro, snap)
-            
-            # After adding/replacing source, we need to update the publication
-            update_opts = []
-            if not args.sign:
-                update_opts += ["-skip-signing"]
-            elif args.keyid:
-                update_opts += ["-gpg-key", args.keyid]
-                if args.passphrase:
-                    update_opts += ["-passphrase", args.passphrase]
-            aptly_run("publish", "update", *update_opts, distro, publish_prefix)
+            logging.info("Successfully updated existing publication %s/%s", channel, distro)
 
         # Sync back & push
         run(["rsync", "-a", "--delete", f"{aptly_public}/", f"{pages}/"], check=True)
