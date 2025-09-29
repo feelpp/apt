@@ -4,14 +4,14 @@ Section: science
 Installed-Size: 17667
 Maintainer: Christophe Prud'homme <christophe.prudhomme@cemosis.fr>
 Architecture: amd64
-Version: 4.0.0-preview.1-20250929.22
+Version: 4.0.0-preview.1-20250929.23
 Depends: libfeelpp1 (>= 0.109), libc6, libgcc-s1, libstdc++6, libann0 (>= 1.1.2+doc), libboost-atomic1.83.0 (>= 1.83.0), libboost-date-time1.83.0 (>= 1.83.0), libboost-filesystem1.83.0 (>= 1.83.0), libboost-iostreams1.83.0 (>= 1.83.0), libboost-mpi1.83.0 (>= 1.83.0), libboost-program-options1.83.0 (>= 1.83.0), libboost-regex1.83.0-icu74, libboost-serialization1.83.0 (>= 1.83.0), libboost-system1.83.0 (>= 1.83.0), libboost-test1.83.0 (>= 1.83.0), libc6 (>= 2.38), libcln6, libcurl4t64 (>= 7.16.2), libfeelpp1, libfftw3-double3 (>= 3.3.10), libfftw3-long3 (>= 3.3.10), libfftw3-mpi3 (>= 3.3.10), libfftw3-single3 (>= 3.3.10), libgcc-s1 (>= 3.3), libgl1, libgl2ps1.4 (>= 1.4.2+dfsg1), libglpk40 (>= 4.59), libgmsh4.12t64 (>= 4.12.1+ds1), libgsl27 (>= 2.7.1), libgslcblas0 (>= 2.7.1), libhdf5-103-1t64, libmetis5 (>= 5.1.0.dfsg), libopenmpi3t64 (>= 4.1.6), libpetsc-real3.19t64 (>= 3.19.6+dfsg1), libscotch-7.0 (>= 7.0.4), libslepc-real3.19t64 (>= 3.19.2+dfsg1), libstdc++6 (>= 13.1), libxml2 (>= 2.6.27), libzip4t64 (>= 0.10), zlib1g (>= 1:1.1.4)
-Filename: pool/feelpp-project/f/feelpp-project/feelpp-project_4.0.0-preview.1-20250929.22_amd64.deb
-Size: 6048168
-MD5sum: 31a3e338a993f2f0ea6d20597db85cb1
-SHA1: def8eeebfbba3b14509d96cdbc5cb283124a4af8
-SHA256: da9a5144fe8ba803a057e23fb1102024b9b75272ffd29bf8074ef9d3825b2bd6
-SHA512: 7a2a4351011e4e1569b4aec9f099491810e5bb5608f26a8d8beb1189c21c55aa0137806b23c418df42e8d2ad81c5c0e0e447b5180e4ea4e60f76fd71c7565b86
+Filename: pool/feelpp-project/f/feelpp-project/feelpp-project_4.0.0-preview.1-20250929.23_amd64.deb
+Size: 6048166
+MD5sum: 99971545854025fac599edad7004f427
+SHA1: c441291577daabe324becaecaef94aac67a18b8f
+SHA256: cd18ea0ae2c1784691a7618c7b9a536fc5da6ebecd6f3f2a2cff78770e3a66cf
+SHA512: 323a4f85506ec976ecad852610db2d21345d51dc4a2024402ed7298ba879271aa80cf0566ee06ba3d8241b23881c857238bab88aa74c0c04cc58316ab1bd3618
 Description: Cemosis feelpp-project template application
  Cemosis provides a Feel++ template application.
 Homepage: https://github.com/feelpp/feelpp-project
