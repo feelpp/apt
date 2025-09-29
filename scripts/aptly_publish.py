@@ -203,13 +203,13 @@ def main():
         publish_prefix = channel
         snapshot_opts = ["-distribution", distro, "-component", component]
         switch_opts = ["-component", component]
+        sign_opts: list[str] = []
         if args.sign:
             sign_opts = ["-gpg-key", args.keyid]
             if args.passphrase:
                 sign_opts += ["-passphrase", args.passphrase]
             snapshot_opts += sign_opts
             switch_opts += sign_opts
-            # Note: add_opts don't support GPG flags, signing happens in publish update
         else:
             snapshot_opts += ["-skip-signing"]
             switch_opts += ["-skip-signing"]
@@ -221,6 +221,19 @@ def main():
             aptly_run("publish", "snapshot", *snapshot_opts, snap, publish_prefix)
         else:
             logging.info("Successfully updated existing publication %s/%s", channel, distro)
+
+        # Refresh metadata (Release/InRelease) to ensure hashes match published indexes
+        update_opts = sign_opts if sign_opts else ["-skip-signing"]
+        update_result = aptly_run(
+            "publish", "update", *update_opts, distro, publish_prefix, check=False
+        )
+        if update_result.returncode == 0:
+            logging.info("Refreshed publication metadata %s/%s", channel, distro)
+        else:
+            logging.warning(
+                "Failed to refresh metadata via 'aptly publish update' (exit=%s); continuing",
+                update_result.returncode,
+            )
 
         # Sync back & push
         run(["rsync", "-a", "--delete", f"{aptly_public}/", f"{pages}/"], check=True)
