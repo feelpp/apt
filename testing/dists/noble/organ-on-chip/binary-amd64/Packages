@@ -4,14 +4,14 @@ Section: science
 Installed-Size: 21105
 Maintainer: Christophe Prud'homme <christophe.prudhomme@cemosis.fr>
 Architecture: amd64
-Version: 1.0.0-preview.1-20250929.0
-Depends: libfeelpp1 (>= 0.109), libc6, libgcc-s1, libstdc++6, libann0 (>= 1.1.2+doc), libboost-atomic1.83.0 (>= 1.83.0), libboost-date-time1.83.0 (>= 1.83.0), libboost-filesystem1.83.0 (>= 1.83.0), libboost-iostreams1.83.0 (>= 1.83.0), libboost-mpi1.83.0 (>= 1.83.0), libboost-program-options1.83.0 (>= 1.83.0), libboost-regex1.83.0-icu74, libboost-serialization1.83.0 (>= 1.83.0), libboost-system1.83.0 (>= 1.83.0), libboost-test1.83.0 (>= 1.83.0), libc6 (>= 2.34), libcln6, libcurl4t64 (>= 7.16.2), libfeelpp-toolboxes1-core, libfeelpp-toolboxes1-hdg, libfeelpp1, libfftw3-double3 (>= 3.3.10), libfftw3-long3 (>= 3.3.10), libfftw3-mpi3 (>= 3.3.10), libfftw3-single3 (>= 3.3.10), libgcc-s1 (>= 3.3), libgl1, libgl2ps1.4 (>= 1.4.2+dfsg1), libglpk40 (>= 4.59), libgmsh4.12t64 (>= 4.12.1+ds1), libgsl27 (>= 2.7.1), libgslcblas0 (>= 2.7.1), libhdf5-103-1t64, libmetis5 (>= 5.1.0.dfsg), libopenmpi3t64 (>= 4.1.6), libpetsc-real3.19t64 (>= 3.19.6+dfsg1), libscotch-7.0 (>= 7.0.4), libslepc-complex3.19t64 (>= 3.19.2+dfsg1), libstdc++6 (>= 13.1), libxml2 (>= 2.6.27), libzip4t64 (>= 0.10), zlib1g (>= 1:1.1.4)
-Filename: pool/organ-on-chip/o/organ-on-chip/organ-on-chip_1.0.0-preview.1-20250929.0_amd64.deb
-Size: 5621368
-MD5sum: fedfe67bf1cc19a37a1eaa890c5f0c55
-SHA1: 71faec996bb432458a234f2fb24850ec44da16df
-SHA256: ec4f7af9bb08676ca02016b487fd82db67b67371f41e645f499c4c1898c52885
-SHA512: 36919691b5bad1eb88a83cee7504edf48e1d565792b5c3a960ddedcd9f932b44b45a8b196934af51efa7c04aacdafa0bf484739bc8f735461b24ad9536c52e2f
+Version: 1.0.0-preview.1-20250929.1
+Depends: libfeelpp1 (>= 0.109), libc6, libgcc-s1, libstdc++6, libann0 (>= 1.1.2+doc), libboost-atomic1.83.0 (>= 1.83.0), libboost-date-time1.83.0 (>= 1.83.0), libboost-filesystem1.83.0 (>= 1.83.0), libboost-iostreams1.83.0 (>= 1.83.0), libboost-mpi1.83.0 (>= 1.83.0), libboost-program-options1.83.0 (>= 1.83.0), libboost-regex1.83.0-icu74, libboost-serialization1.83.0 (>= 1.83.0), libboost-system1.83.0 (>= 1.83.0), libboost-test1.83.0 (>= 1.83.0), libc6 (>= 2.34), libcln6, libcurl4t64 (>= 7.16.2), libfeelpp-toolboxes1-core, libfeelpp-toolboxes1-hdg, libfeelpp1, libfftw3-double3 (>= 3.3.10), libfftw3-long3 (>= 3.3.10), libfftw3-mpi3 (>= 3.3.10), libfftw3-single3 (>= 3.3.10), libgcc-s1 (>= 3.3), libgl1, libgl2ps1.4 (>= 1.4.2+dfsg1), libglpk40 (>= 4.59), libgmsh4.12t64 (>= 4.12.1+ds1), libgsl27 (>= 2.7.1), libgslcblas0 (>= 2.7.1), libhdf5-103-1t64, libmetis5 (>= 5.1.0.dfsg), libopenmpi3t64 (>= 4.1.6), libpetsc-real3.19t64 (>= 3.19.6+dfsg1), libscotch-7.0 (>= 7.0.4), libslepc-real3.19t64 (>= 3.19.2+dfsg1), libstdc++6 (>= 13.1), libxml2 (>= 2.6.27), libzip4t64 (>= 0.10), zlib1g (>= 1:1.1.4)
+Filename: pool/organ-on-chip/o/organ-on-chip/organ-on-chip_1.0.0-preview.1-20250929.1_amd64.deb
+Size: 5621358
+MD5sum: 55c170d6dd52df14ba9ce158209f8fb2
+SHA1: 61d003fda178cb1627363b9e763ae13eb1e8a667
+SHA256: 10c24ac8ea5d460bff2412a8d3e7bb190a6d3bb9cbbb526d0a42d7dc2410a9f9
+SHA512: 99a24d104c22e6d8c5fe5ae51dd50f257395d02f6e15c87cc381dfab6dc244de0970eef447d4dae66a2245a0cbb46f56e99d6e455d4e6fb88207f5021bb32e58
 Description: Cemosis organ-on-chip template application
  Cemosis provides a Feel++ template application.
 Homepage: https://github.com/feelpp/organ-on-chip
