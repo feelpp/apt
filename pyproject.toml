@@ -1,0 +1,86 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "feelpp-aptly-publisher"
+version = "1.0.0"
+description = "Tool to publish Debian packages to Feel++ APT repository via aptly and GitHub Pages"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "LGPL-3.0-or-later"}
+authors = [
+    {name = "Feel++ Consortium", email = "contact@feelpp.org"}
+]
+maintainers = [
+    {name = "Feel++ Packaging Team", email = "contact@feelpp.org"}
+]
+keywords = ["apt", "debian", "packaging", "aptly", "github-pages", "feelpp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Archiving :: Packaging",
+]
+
+# No external dependencies - uses only Python stdlib
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "flake8>=6.0",
+    "flake8-bugbear>=23.0",
+    "flake8-comprehensions>=3.0",
+    "mypy>=1.0",
+    "build>=1.0",
+    "twine>=4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/feelpp/apt"
+Documentation = "https://github.com/feelpp/apt#readme"
+Repository = "https://github.com/feelpp/apt.git"
+Issues = "https://github.com/feelpp/apt/issues"
+"Feel++ Main" = "https://www.feelpp.org"
+"APT Repository" = "https://feelpp.github.io/apt/"
+
+[project.scripts]
+feelpp-apt-publish = "feelpp_aptly_publisher.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+feelpp_aptly_publisher = ["py.typed"]
+
+[tool.black]
+line-length = 120
+target-version = ['py38', 'py39', 'py310', 'py311']
+
+[tool.flake8]
+max-line-length = 120
+extend-ignore = ["E203", "W503"]
+exclude = [".git", "__pycache__", "build", "dist", ".eggs", "*.egg-info", ".venv", "venv"]
+per-file-ignores = ["__init__.py:F401"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
