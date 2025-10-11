@@ -1,0 +1,66 @@
+Package: libmmg-dev
+Priority: optional
+Section: libdevel
+Installed-Size: 977
+Maintainer: Feel++ Packaging Team <contact@feelpp.org>
+Architecture: amd64
+Source: mmg
+Version: 5.8.0-1feelpp1
+Depends: libmmg5 (= 5.8.0-1feelpp1)
+Filename: pool/mmg/m/mmg/libmmg-dev_5.8.0-1feelpp1_amd64.deb
+Size: 86062
+MD5sum: c9d6035a7bb19bc938e9f700a3906676
+SHA1: 72babf0a28b58a18f0ec21a5f3af48ebb6798299
+SHA256: e32d95473256e37ceb901c2de7db91f36bca6803f744b3c6bf21d172b82dd888
+SHA512: 37f70a14adcc8124bd8380dbc3c3f0cdfc2a189a93d7c5c0c7ea1da62607e9415f3fd6afc389ee9479c60a88021cae206268d7caca55e8b387e7d82e9cc6e49f
+Description: Development files for mmg remeshing libraries
+ Install the development headers, CMake configuration files, and other
+ artifacts necessary to build software against mmg. Private headers are
+ shipped to support downstream projects such as parmmg that extend mmg.
+Homepage: https://www.mmgtools.org/
+Multi-Arch: same
+
+Package: libmmg5
+Priority: optional
+Section: libs
+Installed-Size: 3767
+Maintainer: Feel++ Packaging Team <contact@feelpp.org>
+Architecture: amd64
+Source: mmg
+Version: 5.8.0-1feelpp1
+Depends: libc6 (>= 2.34), libscotch-7.0 (>= 7.0.4)
+Filename: pool/mmg/m/mmg/libmmg5_5.8.0-1feelpp1_amd64.deb
+Size: 856298
+MD5sum: 4fd13ff95fe2562f8d7f995aba531fd9
+SHA1: 620cf6005f994354b6f138f892cc4c28e8221162
+SHA256: e751a30600e13b6d13d304ff7e480dc47066a2b39366d31f0a2e1b960f73f98c
+SHA512: 9b1e1ab245927acd4a4042c98140fa7f20c7ddf1aef227fd392293f8686488ff7e1f110b97a07d5177de73201943b02a225772006d61a6f8db817c3a94f83066
+Description: Simplicial remeshing libraries (shared objects)
+ The mmg project ships shared libraries that implement mesh adaptation
+ and optimisation for 2D, surface, and 3D tetrahedral meshes. This
+ package contains the runtime shared objects required by software that
+ depends on mmg.
+Homepage: https://www.mmgtools.org/
+Multi-Arch: same
+
+Package: mmg
+Priority: optional
+Section: science
+Installed-Size: 92
+Maintainer: Feel++ Packaging Team <contact@feelpp.org>
+Architecture: amd64
+Version: 5.8.0-1feelpp1
+Depends: libc6 (>= 2.34), libmmg5 (= 5.8.0-1feelpp1)
+Filename: pool/mmg/m/mmg/mmg_5.8.0-1feelpp1_amd64.deb
+Size: 22864
+MD5sum: 07390a32a9c872c2190d657a4a5f5854
+SHA1: ca82feb1e197da68c61437c7d6fcfe3bcd9bb3d7
+SHA256: 3c8169c0ad38140d86a9e92b523599de32527654b637287cd6fc47007652343e
+SHA512: 432de5f96ba420167f6eb49bd9b09d90f3d3c20b225733f86b45bd243590d18cf82d7b846d7de3671f8b091907c473ced1f1ed4e3bd7708366317c4114f33993
+Description: Simplicial remeshing tools
+ Mmg provides standalone remeshing executables for 2D, surface, and
+ volume meshes. The tools can adapt existing meshes, discretise level
+ sets, and generate new meshes using the same algorithms as the mmg
+ libraries.
+Homepage: https://www.mmgtools.org/
+
