@@ -52,3 +52,7 @@ dmypy.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Aptly binaries
+aptly_*.zip
+aptly_*/
