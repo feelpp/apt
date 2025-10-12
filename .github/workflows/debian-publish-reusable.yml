@@ -1,0 +1,153 @@
+name: Reusable Debian Package Build & Publish
+
+on:
+  workflow_call:
+    inputs:
+      component:
+        description: 'APT component (base, feelpp, applications, ktirio)'
+        required: true
+        type: string
+      distribution:
+        description: 'Debian distribution (noble, jammy, etc.)'
+        required: false
+        type: string
+        default: 'noble'
+      build-script:
+        description: 'Path to build script relative to repo root'
+        required: false
+        type: string
+        default: 'debian/build-deb.sh'
+      package-pattern:
+        description: 'Pattern to match .deb files (relative to parent dir of repo)'
+        required: false
+        type: string
+        default: '../*.deb'
+      build-dependencies:
+        description: 'Additional build dependencies to install'
+        required: false
+        type: string
+        default: ''
+      runs-on:
+        description: 'Runner to use for builds'
+        required: false
+        type: string
+        default: 'ubuntu-24.04'
+      sign-packages:
+        description: 'Sign packages with GPG (recommended for stable channel)'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      gpg-key-id:
+        description: 'GPG key ID for signing (required if sign-packages=true)'
+        required: false
+      gpg-passphrase:
+        description: 'GPG passphrase for signing'
+        required: false
+
+jobs:
+  build-deb:
+    name: Build Debian Package
+    runs-on: ${{ inputs.runs-on }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install base build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y debhelper cmake devscripts
+    
+    - name: Install additional dependencies
+      if: inputs.build-dependencies != ''
+      run: |
+        sudo apt-get install -y ${{ inputs.build-dependencies }}
+    
+    - name: Build Debian package
+      run: |
+        if [[ -x "${{ inputs.build-script }}" ]]; then
+          ${{ inputs.build-script }}
+        else
+          dpkg-buildpackage -us -uc -b
+        fi
+    
+    - name: List generated packages
+      run: |
+        ls -lh ${{ inputs.package-pattern }}
+    
+    - name: Upload package artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: debian-packages
+        path: ${{ inputs.package-pattern }}
+        retention-days: 30
+
+  publish:
+    name: Publish to APT Repository
+    runs-on: ubuntu-24.04
+    needs: build-deb
+    if: |
+      github.event_name == 'release' ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')) ||
+      github.event_name == 'pull_request'
+    
+    steps:
+    - name: Determine channel
+      id: channel
+      run: |
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          echo "channel=stable" >> $GITHUB_OUTPUT
+          echo "Channel: stable (triggered by release)"
+        elif [[ "${{ github.event_name }}" == "push" ]]; then
+          echo "channel=testing" >> $GITHUB_OUTPUT
+          echo "Channel: testing (triggered by push to main/master)"
+        elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "channel=pr" >> $GITHUB_OUTPUT
+          echo "Channel: pr (triggered by pull request)"
+        fi
+    
+    - name: Download packages
+      uses: actions/download-artifact@v4
+      with:
+        name: debian-packages
+    
+    - name: List downloaded packages
+      run: |
+        echo "Downloaded packages:"
+        ls -lh *.deb
+    
+    - name: Checkout APT repository
+      uses: actions/checkout@v4
+      with:
+        repository: feelpp/apt
+        ref: main
+        path: apt-repo
+    
+    - name: Setup aptly and publish
+      uses: feelpp/setup-aptly@v2
+      with:
+        publish: true
+        component: ${{ inputs.component }}
+        channel: ${{ steps.channel.outputs.channel }}
+        distribution: ${{ inputs.distribution }}
+        debs-path: .
+        apt-repo-path: apt-repo
+        sign: ${{ inputs.sign-packages }}
+        gpg-key-id: ${{ secrets.gpg-key-id }}
+        gpg-passphrase: ${{ secrets.gpg-passphrase }}
+    
+    - name: Summary
+      run: |
+        echo "### 📦 Package Published Successfully!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Component:** ${{ inputs.component }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Channel:** ${{ steps.channel.outputs.channel }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Distribution:** ${{ inputs.distribution }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Signed:** ${{ inputs.sign-packages && '✅ Yes' || '❌ No' }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Repository:** https://feelpp.github.io/apt/${{ steps.channel.outputs.channel }}/dists/${{ inputs.distribution }}/" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "To use this package:" >> $GITHUB_STEP_SUMMARY
+        echo '```bash' >> $GITHUB_STEP_SUMMARY
+        echo "deb [arch=amd64] https://feelpp.github.io/apt/${{ steps.channel.outputs.channel }} ${{ inputs.distribution }} ${{ inputs.component }}" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
