@@ -228,39 +228,91 @@ class AptlyPublisher:
             snap = f"{repo_name}-{ts}"
             aptly_run("snapshot", "create", snap, "from", "repo", repo_name)
 
-            # Publish or switch
+            # Publish or switch or add
             publish_prefix = self.channel
-            snapshot_opts = ["-distribution", self.distro, "-component", self.component]
-            switch_opts = ["-component", self.component]
             sign_opts: List[str] = []
             if self.sign:
                 sign_opts = ["-gpg-key", self.keyid]  # type: ignore
                 if self.passphrase:
                     sign_opts += ["-passphrase", self.passphrase]
-                snapshot_opts += sign_opts
-                switch_opts += sign_opts
             else:
-                snapshot_opts += ["-skip-signing"]
-                switch_opts += ["-skip-signing"]
+                sign_opts = ["-skip-signing"]
 
-            # Try to switch first (update), fallback to snapshot (first publish)
-            switch_result = aptly_run("publish", "switch", *switch_opts, self.distro, publish_prefix, snap, check=False)
-            if switch_result.returncode != 0:
-                self.logger.info("Switch failed, doing first-time publish %s/%s ...", self.channel, self.distro)
+            # Check if publication exists
+            list_result = aptly_run("publish", "list", "-raw", check=False)
+            publication_exists = list_result.returncode == 0
+            
+            # Parse existing publications to check for our distro/prefix
+            existing_components = []
+            our_publication_exists = False
+            if publication_exists:
+                # Try to get the list of publications
+                list_output = aptly_run("publish", "list", check=False)
+                if list_output.returncode == 0:
+                    # Check if our specific publication (distro/prefix) exists
+                    # Format: "prefix:distro [component1, component2]" or similar
+                    # We need to query more specifically
+                    pass
+            
+            # Try to detect existing components by checking if publication exists
+            show_result = aptly_run("publish", "show", self.distro, publish_prefix, check=False)
+            if show_result.returncode == 0:
+                our_publication_exists = True
+                self.logger.info("Publication %s/%s exists", self.channel, self.distro)
+                
+                # Try to parse existing components from the output
+                # Note: This is a simple approach - aptly doesn't have a great API for this
+                # We'll attempt to read the existing InRelease file to get components
+                inrelease_path = aptly_public / self.channel / "dists" / self.distro / "InRelease"
+                if inrelease_path.exists():
+                    inrelease_content = inrelease_path.read_text(encoding="utf-8")
+                    for line in inrelease_content.split("\n"):
+                        if line.startswith("Components:"):
+                            components_str = line.split(":", 1)[1].strip()
+                            existing_components = [c.strip() for c in components_str.split()]
+                            self.logger.info("Existing components: %s", ", ".join(existing_components))
+                            break
+            
+            # Decide on action: switch (update component), add (new component), or snapshot (first publish)
+            if our_publication_exists:
+                if self.component in existing_components:
+                    # Component exists - switch to update it
+                    self.logger.info("Updating existing component '%s' in %s/%s ...", 
+                                    self.component, self.channel, self.distro)
+                    switch_opts = ["-component", self.component] + sign_opts
+                    switch_result = aptly_run("publish", "switch", *switch_opts, 
+                                             self.distro, publish_prefix, snap, check=False)
+                    if switch_result.returncode != 0:
+                        self.logger.error("Failed to switch/update component %s", self.component)
+                        sys.exit(1)
+                    self.logger.info("Successfully updated component '%s'", self.component)
+                else:
+                    # Component doesn't exist - add it
+                    self.logger.info("Adding new component '%s' to %s/%s ...", 
+                                    self.component, self.channel, self.distro)
+                    # For aptly publish add: publish add <distribution> <prefix> <snapshot> [<component>]
+                    add_result = aptly_run("publish", "add", self.distro, publish_prefix, 
+                                          snap, self.component, check=False)
+                    if add_result.returncode != 0:
+                        self.logger.error("Failed to add component %s", self.component)
+                        sys.exit(1)
+                    self.logger.info("Successfully added component '%s'", self.component)
+                    
+                    # After adding, we need to update the publication
+                    self.logger.info("Updating publication metadata to include new component...")
+                    update_result = aptly_run("publish", "update", *sign_opts, 
+                                             self.distro, publish_prefix, check=False)
+                    if update_result.returncode != 0:
+                        self.logger.warning("Failed to update publication metadata (exit=%s)", 
+                                          update_result.returncode)
+                    else:
+                        self.logger.info("Successfully updated publication metadata")
+            else:
+                # Publication doesn't exist - create it
+                self.logger.info("Creating first-time publication %s/%s ...", self.channel, self.distro)
+                snapshot_opts = ["-distribution", self.distro, "-component", self.component] + sign_opts
                 aptly_run("publish", "snapshot", *snapshot_opts, snap, publish_prefix)
-            else:
-                self.logger.info("Successfully updated existing publication %s/%s", self.channel, self.distro)
-
-            # Refresh metadata
-            update_opts = sign_opts if sign_opts else ["-skip-signing"]
-            update_result = aptly_run("publish", "update", *update_opts, self.distro, publish_prefix, check=False)
-            if update_result.returncode == 0:
-                self.logger.info("Refreshed publication metadata %s/%s", self.channel, self.distro)
-            else:
-                self.logger.warning(
-                    "Failed to refresh metadata via 'aptly publish update' (exit=%s); continuing",
-                    update_result.returncode,
-                )
+                self.logger.info("Successfully created publication %s/%s", self.channel, self.distro)
 
             # Sync back & push
             self._run(["rsync", "-a", "--delete", f"{aptly_public}/", f"{pages}/"], check=True)
