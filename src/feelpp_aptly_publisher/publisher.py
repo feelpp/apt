@@ -203,6 +203,17 @@ class AptlyPublisher:
             # Seed from current publication
             aptly_public.mkdir(parents=True, exist_ok=True)
             self._run(["rsync", "-a", f"{pages}/", f"{aptly_public}/"], check=True)
+            
+            # Recover aptly database from published repository if it exists
+            # This is necessary so aptly knows about existing publications
+            inrelease_check = aptly_public / self.channel / "dists" / self.distro / "InRelease"
+            if inrelease_check.exists():
+                self.logger.info("Recovering aptly database from existing publication...")
+                recover_result = aptly_run("db", "recover", check=False)
+                if recover_result.returncode == 0:
+                    self.logger.info("Successfully recovered aptly database")
+                else:
+                    self.logger.warning("Could not recover aptly database (may be first publish)")
 
             # Stage repo and snapshot
             repo_name = f"{self.component}-{self.distro}-{self.channel}"
@@ -279,7 +290,7 @@ class AptlyPublisher:
                     # Component exists - switch to update it
                     self.logger.info("Updating existing component '%s' in %s/%s ...", 
                                     self.component, self.channel, self.distro)
-                    switch_opts = ["-component", self.component] + sign_opts
+                    switch_opts = ["-component", self.component, "-force-overwrite"] + sign_opts
                     switch_result = aptly_run("publish", "switch", *switch_opts, 
                                              self.distro, publish_prefix, snap, check=False)
                     if switch_result.returncode != 0:
@@ -310,7 +321,7 @@ class AptlyPublisher:
             else:
                 # Publication doesn't exist - create it
                 self.logger.info("Creating first-time publication %s/%s ...", self.channel, self.distro)
-                snapshot_opts = ["-distribution", self.distro, "-component", self.component] + sign_opts
+                snapshot_opts = ["-distribution", self.distro, "-component", self.component, "-force-overwrite"] + sign_opts
                 aptly_run("publish", "snapshot", *snapshot_opts, snap, publish_prefix)
                 self.logger.info("Successfully created publication %s/%s", self.channel, self.distro)
 
