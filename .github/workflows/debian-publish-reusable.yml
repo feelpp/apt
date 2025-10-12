@@ -71,15 +71,25 @@ jobs:
           dpkg-buildpackage -us -uc -b
         fi
     
-    - name: List generated packages
+    - name: Collect generated packages
       run: |
-        ls -lh ${{ inputs.package-pattern }}
+        # Copy packages to current directory for artifact upload
+        # GitHub Actions v4 doesn't support ../ patterns
+        mkdir -p debian-packages
+        if ls ${{ inputs.package-pattern }} 1> /dev/null 2>&1; then
+          cp ${{ inputs.package-pattern }} debian-packages/
+          echo "Collected packages:"
+          ls -lh debian-packages/*.deb
+        else
+          echo "Error: No packages found matching pattern: ${{ inputs.package-pattern }}"
+          exit 1
+        fi
     
     - name: Upload package artifact
       uses: actions/upload-artifact@v4
       with:
         name: debian-packages
-        path: ${{ inputs.package-pattern }}
+        path: debian-packages/*.deb
         retention-days: 30
 
   publish:
