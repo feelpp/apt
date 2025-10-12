@@ -58,7 +58,7 @@ on:
 jobs:
   build-deb:
     name: Build Debian Package (${{ matrix.distribution }}-${{ matrix.architecture }})
-    runs-on: ${{ matrix.architecture == 'arm64' && 'ubuntu-24.04-arm64' || inputs.runs-on }}
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -81,10 +81,11 @@ jobs:
       if: inputs.use-pbuilder
       run: |
         sudo apt-get update
-        sudo apt-get install -y ubuntu-dev-tools
+        sudo apt-get install -y ubuntu-dev-tools build-essential devscripts
         
-        # pbuilder-dist is part of ubuntu-dev-tools
-        echo "Installed pbuilder-dist from ubuntu-dev-tools"
+        # ubuntu-dev-tools includes pbuilder-dist
+        # build-essential and devscripts provide tools for creating source packages
+        echo "Installed pbuilder-dist and source package build tools"
     
     - name: Create or update pbuilder environment
       if: inputs.use-pbuilder
@@ -109,19 +110,31 @@ jobs:
       run: |
         sudo apt-get install -y ${{ inputs.build-dependencies }}
     
+    - name: Build Debian source package
+      if: inputs.use-pbuilder
+      run: |
+        echo "Creating Debian source package..."
+        # Build source package (.dsc, .orig.tar.gz, .debian.tar.xz)
+        dpkg-buildpackage -S -us -uc -d
+        
+        echo "Source package created:"
+        ls -lh ../*.dsc
+    
     - name: Build Debian package with pbuilder-dist
       if: inputs.use-pbuilder
       run: |
         echo "Building package for ${{ matrix.distribution }}-${{ matrix.architecture }} with pbuilder-dist..."
         
-        # pbuilder-dist automatically:
-        # - Builds source package
-        # - Runs pbuilder build in chroot
-        # - Places results in ../ directory
-        pbuilder-dist ${{ matrix.distribution }} ${{ matrix.architecture }} build
+        # Find the .dsc file
+        DSC_FILE=$(ls ../*.dsc | head -n1)
+        echo "Building from: $DSC_FILE"
+        
+        # pbuilder-dist builds the package in a clean chroot
+        # Results are placed in ~/pbuilder/<dist>-<arch>_result/
+        pbuilder-dist ${{ matrix.distribution }} ${{ matrix.architecture }} build "$DSC_FILE"
         
         echo "Build completed successfully!"
-        ls -lh ../*.deb
+        ls -lh ~/pbuilder/${{ matrix.distribution }}-${{ matrix.architecture }}_result/*.deb
     
     - name: Build Debian package (legacy mode)
       if: ${{ !inputs.use-pbuilder }}
@@ -137,18 +150,33 @@ jobs:
         # Copy packages to current directory for artifact upload
         # GitHub Actions v4 doesn't support ../ patterns
         mkdir -p debian-packages
-        if ls ${{ inputs.package-pattern }} 1> /dev/null 2>&1; then
-          cp ${{ inputs.package-pattern }} debian-packages/
-          echo "Collected packages:"
-          ls -lh debian-packages/*.deb
-          
-          # Create metadata file to track distribution and architecture
-          echo "${{ matrix.distribution }}" > debian-packages/DISTRIBUTION
-          echo "${{ matrix.architecture }}" > debian-packages/ARCHITECTURE
+        
+        if [ "${{ inputs.use-pbuilder }}" = "true" ]; then
+          # pbuilder-dist results are in ~/pbuilder/<dist>-<arch>_result/
+          RESULT_DIR=~/pbuilder/${{ matrix.distribution }}-${{ matrix.architecture }}_result
+          if ls $RESULT_DIR/*.deb 1> /dev/null 2>&1; then
+            cp $RESULT_DIR/*.deb debian-packages/
+            echo "Collected pbuilder packages:"
+            ls -lh debian-packages/*.deb
+          else
+            echo "ERROR: No .deb files found in $RESULT_DIR"
+            exit 1
+          fi
         else
-          echo "Error: No packages found matching pattern: ${{ inputs.package-pattern }}"
-          exit 1
+          # Legacy mode: packages in parent directory
+          if ls ${{ inputs.package-pattern }} 1> /dev/null 2>&1; then
+            cp ${{ inputs.package-pattern }} debian-packages/
+            echo "Collected packages:"
+            ls -lh debian-packages/*.deb
+          else
+            echo "Error: No packages found matching pattern: ${{ inputs.package-pattern }}"
+            exit 1
+          fi
         fi
+        
+        # Create metadata file to track distribution and architecture
+        echo "${{ matrix.distribution }}" > debian-packages/DISTRIBUTION
+        echo "${{ matrix.architecture }}" > debian-packages/ARCHITECTURE
     
     - name: Upload package artifact
       uses: actions/upload-artifact@v4
