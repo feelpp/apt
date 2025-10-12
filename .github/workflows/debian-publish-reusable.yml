@@ -81,10 +81,11 @@ jobs:
       if: inputs.use-pbuilder
       run: |
         sudo apt-get update
-        sudo apt-get install -y ubuntu-dev-tools build-essential devscripts
+        sudo apt-get install -y ubuntu-dev-tools build-essential devscripts debhelper
         
         # ubuntu-dev-tools includes pbuilder-dist
         # build-essential and devscripts provide tools for creating source packages
+        # debhelper provides dh command needed by debian/rules
         echo "Installed pbuilder-dist and source package build tools"
     
     - name: Create or update pbuilder environment
