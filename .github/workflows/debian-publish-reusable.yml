@@ -7,13 +7,18 @@ on:
         description: 'APT component (base, feelpp, applications, ktirio)'
         required: true
         type: string
-      distribution:
-        description: 'Debian distribution (noble, jammy, etc.)'
+      distributions:
+        description: 'JSON array of distributions to build for, e.g. ["noble", "trixie"]'
         required: false
         type: string
-        default: 'noble'
+        default: '["noble"]'
+      architectures:
+        description: 'JSON array of architectures to build for, e.g. ["amd64", "arm64"]'
+        required: false
+        type: string
+        default: '["amd64"]'
       build-script:
-        description: 'Path to build script relative to repo root'
+        description: 'Path to build script relative to repo root (not used with pbuilder)'
         required: false
         type: string
         default: 'debian/build-deb.sh'
@@ -23,10 +28,15 @@ on:
         type: string
         default: '../*.deb'
       build-dependencies:
-        description: 'Additional build dependencies to install'
+        description: 'Additional build dependencies to install (not used with pbuilder, use debian/control)'
         required: false
         type: string
         default: ''
+      use-pbuilder:
+        description: 'Use pbuilder for clean chroot builds (recommended)'
+        required: false
+        type: boolean
+        default: true
       runs-on:
         description: 'Runner to use for builds'
         required: false
@@ -47,23 +57,74 @@ on:
 
 jobs:
   build-deb:
-    name: Build Debian Package
-    runs-on: ${{ inputs.runs-on }}
+    name: Build Debian Package (${{ matrix.distribution }}-${{ matrix.architecture }})
+    runs-on: ${{ matrix.architecture == 'arm64' && 'ubuntu-24.04-arm64' || inputs.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        distribution: ${{ fromJSON(inputs.distributions) }}
+        architecture: ${{ fromJSON(inputs.architectures) }}
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install base build dependencies
+    - name: Cache pbuilder base tarball
+      if: inputs.use-pbuilder
+      uses: actions/cache@v4
+      with:
+        path: ~/pbuilder/${{ matrix.distribution }}-${{ matrix.architecture }}-base.tgz
+        key: pbuilder-${{ matrix.distribution }}-${{ matrix.architecture }}-${{ runner.os }}-v1
+        restore-keys: |
+          pbuilder-${{ matrix.distribution }}-${{ matrix.architecture }}-${{ runner.os }}-
+    
+    - name: Install pbuilder-dist
+      if: inputs.use-pbuilder
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ubuntu-dev-tools
+        
+        # pbuilder-dist is part of ubuntu-dev-tools
+        echo "Installed pbuilder-dist from ubuntu-dev-tools"
+    
+    - name: Create or update pbuilder environment
+      if: inputs.use-pbuilder
+      run: |
+        # Create if doesn't exist, update if it does
+        if [ -f ~/pbuilder/${{ matrix.distribution }}-${{ matrix.architecture }}-base.tgz ]; then
+          echo "Updating existing pbuilder environment for ${{ matrix.distribution }}-${{ matrix.architecture }}..."
+          pbuilder-dist ${{ matrix.distribution }} ${{ matrix.architecture }} update
+        else
+          echo "Creating new pbuilder environment for ${{ matrix.distribution }}-${{ matrix.architecture }}..."
+          pbuilder-dist ${{ matrix.distribution }} ${{ matrix.architecture }} create
+        fi
+    
+    - name: Install base build dependencies (legacy mode)
+      if: ${{ !inputs.use-pbuilder }}
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential debhelper cmake devscripts
     
-    - name: Install additional dependencies
-      if: inputs.build-dependencies != ''
+    - name: Install additional dependencies (legacy mode)
+      if: ${{ !inputs.use-pbuilder && inputs.build-dependencies != '' }}
       run: |
         sudo apt-get install -y ${{ inputs.build-dependencies }}
     
-    - name: Build Debian package
+    - name: Build Debian package with pbuilder-dist
+      if: inputs.use-pbuilder
+      run: |
+        echo "Building package for ${{ matrix.distribution }}-${{ matrix.architecture }} with pbuilder-dist..."
+        
+        # pbuilder-dist automatically:
+        # - Builds source package
+        # - Runs pbuilder build in chroot
+        # - Places results in ../ directory
+        pbuilder-dist ${{ matrix.distribution }} ${{ matrix.architecture }} build
+        
+        echo "Build completed successfully!"
+        ls -lh ../*.deb
+    
+    - name: Build Debian package (legacy mode)
+      if: ${{ !inputs.use-pbuilder }}
       run: |
         if [[ -x "${{ inputs.build-script }}" ]]; then
           ${{ inputs.build-script }}
@@ -80,6 +141,10 @@ jobs:
           cp ${{ inputs.package-pattern }} debian-packages/
           echo "Collected packages:"
           ls -lh debian-packages/*.deb
+          
+          # Create metadata file to track distribution and architecture
+          echo "${{ matrix.distribution }}" > debian-packages/DISTRIBUTION
+          echo "${{ matrix.architecture }}" > debian-packages/ARCHITECTURE
         else
           echo "Error: No packages found matching pattern: ${{ inputs.package-pattern }}"
           exit 1
@@ -88,14 +153,19 @@ jobs:
     - name: Upload package artifact
       uses: actions/upload-artifact@v4
       with:
-        name: debian-packages
-        path: debian-packages/*.deb
+        name: deb-${{ matrix.distribution }}-${{ matrix.architecture }}
+        path: debian-packages/
         retention-days: 30
 
   publish:
-    name: Publish to APT Repository
+    name: Publish to APT Repository (${{ matrix.distribution }}-${{ matrix.architecture }})
     runs-on: ubuntu-24.04
     needs: build-deb
+    strategy:
+      fail-fast: false
+      matrix:
+        distribution: ${{ fromJSON(inputs.distributions) }}
+        architecture: ${{ fromJSON(inputs.architectures) }}
     if: |
       github.event_name == 'release' ||
       (github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')) ||
@@ -119,12 +189,13 @@ jobs:
     - name: Download packages
       uses: actions/download-artifact@v4
       with:
-        name: debian-packages
+        name: deb-${{ matrix.distribution }}-${{ matrix.architecture }}
     
     - name: List downloaded packages
       run: |
-        echo "Downloaded packages:"
+        echo "Downloaded packages for ${{ matrix.distribution }}-${{ matrix.architecture }}:"
         ls -lh *.deb
+        cat DISTRIBUTION ARCHITECTURE
     
     - name: Checkout APT repository
       uses: actions/checkout@v4
@@ -139,7 +210,7 @@ jobs:
         publish: true
         component: ${{ inputs.component }}
         channel: ${{ steps.channel.outputs.channel }}
-        distribution: ${{ inputs.distribution }}
+        distribution: ${{ matrix.distribution }}
         debs-path: .
         apt-repo-path: apt-repo
         sign: ${{ inputs.sign-packages }}
@@ -152,12 +223,13 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Component:** ${{ inputs.component }}" >> $GITHUB_STEP_SUMMARY
         echo "**Channel:** ${{ steps.channel.outputs.channel }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Distribution:** ${{ inputs.distribution }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Distribution:** ${{ matrix.distribution }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Architecture:** ${{ matrix.architecture }}" >> $GITHUB_STEP_SUMMARY
         echo "**Signed:** ${{ inputs.sign-packages && '✅ Yes' || '❌ No' }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Repository:** https://feelpp.github.io/apt/${{ steps.channel.outputs.channel }}/dists/${{ inputs.distribution }}/" >> $GITHUB_STEP_SUMMARY
+        echo "**Repository:** https://feelpp.github.io/apt/${{ steps.channel.outputs.channel }}/dists/${{ matrix.distribution }}/" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "To use this package:" >> $GITHUB_STEP_SUMMARY
         echo '```bash' >> $GITHUB_STEP_SUMMARY
-        echo "deb [arch=amd64] https://feelpp.github.io/apt/${{ steps.channel.outputs.channel }} ${{ inputs.distribution }} ${{ inputs.component }}" >> $GITHUB_STEP_SUMMARY
+        echo "deb [arch=${{ matrix.architecture }}] https://feelpp.github.io/apt/${{ steps.channel.outputs.channel }} ${{ matrix.distribution }} ${{ inputs.component }}" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
