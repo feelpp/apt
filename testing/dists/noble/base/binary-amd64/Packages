@@ -1,0 +1,163 @@
+Package: libmmg-dev
+Priority: optional
+Section: libdevel
+Installed-Size: 977
+Maintainer: Feel++ Packaging Team <contact@feelpp.org>
+Architecture: amd64
+Source: mmg
+Version: 5.8.0-1feelpp1
+Depends: libmmg5 (= 5.8.0-1feelpp1)
+Filename: pool/base/m/mmg/libmmg-dev_5.8.0-1feelpp1_amd64.deb
+Size: 86112
+MD5sum: 3bbc3ebbcc50eecd0ed2293413ee2d52
+SHA1: ddacfac3e9ef0b3185a19353d28148ffd05a588e
+SHA256: 781e02da1de3814f7b43eab8538f10cb6a5d88d0db260e6b29ac53b69b1bff53
+SHA512: 4afcefa964590c3e4f44ecdd9ef2671d1d04048d6188def2175e2a22b3d7a00c98127d51055fc307eeaf61afb089695b023d8c879574170e4ae4687f3cce798f
+Description: Development files for mmg remeshing libraries
+ Install the development headers, CMake configuration files, and other
+ artifacts necessary to build software against mmg. Private headers are
+ shipped to support downstream projects such as parmmg that extend mmg.
+Homepage: https://www.mmgtools.org/
+Multi-Arch: same
+
+Package: libmmg5
+Priority: optional
+Section: libs
+Installed-Size: 3767
+Maintainer: Feel++ Packaging Team <contact@feelpp.org>
+Architecture: amd64
+Source: mmg
+Version: 5.8.0-1feelpp1
+Depends: libc6 (>= 2.34), libscotch-7.0 (>= 7.0.4)
+Filename: pool/base/m/mmg/libmmg5_5.8.0-1feelpp1_amd64.deb
+Size: 856298
+MD5sum: 4fd13ff95fe2562f8d7f995aba531fd9
+SHA1: 620cf6005f994354b6f138f892cc4c28e8221162
+SHA256: e751a30600e13b6d13d304ff7e480dc47066a2b39366d31f0a2e1b960f73f98c
+SHA512: 9b1e1ab245927acd4a4042c98140fa7f20c7ddf1aef227fd392293f8686488ff7e1f110b97a07d5177de73201943b02a225772006d61a6f8db817c3a94f83066
+Description: Simplicial remeshing libraries (shared objects)
+ The mmg project ships shared libraries that implement mesh adaptation
+ and optimisation for 2D, surface, and 3D tetrahedral meshes. This
+ package contains the runtime shared objects required by software that
+ depends on mmg.
+Homepage: https://www.mmgtools.org/
+Multi-Arch: same
+
+Package: libnapp-dev
+Priority: optional
+Section: libdevel
+Installed-Size: 88
+Maintainer: Christophe Prud'homme <christophe.prudhomme@cemosis.fr>
+Architecture: all
+Source: napp
+Version: 0.3-1feelpp1
+Filename: pool/base/n/napp/libnapp-dev_0.3-1feelpp1_all.deb
+Size: 9374
+MD5sum: 4a9e69784b1c214a26f16d3898d89a13
+SHA1: 92aab3654cce330d285bc94a373b675a5819e31f
+SHA256: db0dfa6cbb4c20fd471765e89a93eb2fa3c542e8be0f0aa0b1e0143aa7096410
+SHA512: 8baf1c6f02adee61d0c54e29f887b40771f9e803414e40833ca85b264793ad7b1b5d4d252511cf060da99a22446c4c93e9eacbb0e3bc8d0fae83bc7b5bccacac
+Description: Named Arguments in C++ - header-only library
+ NAPP (Named Arguments) is a modern C++ header-only library that provides
+ named arguments support for C++ functions. It allows passing arguments by
+ name rather than position, similar to Python's keyword arguments.
+ .
+ Features:
+  * Arguments given by value
+  * Arguments given by reference (lvalue or rvalue)
+  * Static arguments
+  * Default values
+  * Support for both template and non-template functions
+  * Header-only, no runtime dependencies
+ .
+ This package contains the header files needed to develop applications
+ using the NAPP library.
+Homepage: https://github.com/feelpp/napp
+Multi-Arch: foreign
+
+Package: libparmmg-dev
+Priority: optional
+Section: libdevel
+Installed-Size: 293
+Maintainer: Feel++ Packaging Team <contact@feelpp.org>
+Architecture: amd64
+Source: parmmg
+Version: 1.5.0-1
+Depends: libparmmg5 (= 1.5.0-1), libmmg-dev
+Filename: pool/base/p/parmmg/libparmmg-dev_1.5.0-1_amd64.deb
+Size: 26904
+MD5sum: 9eaf0d5c20ef054a8aa44d3327166d20
+SHA1: 6569ade4f4d922cf1bdb9ee6ec6fb9e09d5b4cda
+SHA256: 7b71b7fd7bd8b055e2db4c5406cd6c3083a0c1756ed9f93588c2b338211793f4
+SHA512: 4aaa7534bb83eff5e1ebd34e6f42a4d08a7cc052cd97ad01dbc7bc158bfbc5d17619f777077611cdcdf6acac4daeabcc974ca4b071a759ebb6a4e4edb769cb01
+Description: Development files for ParMmg remeshing libraries
+ Install the development headers, CMake configuration files, and other
+ artifacts necessary to build software against ParMmg. This package provides
+ the necessary files to compile applications using ParMmg.
+Homepage: https://github.com/MmgTools/ParMmg
+Multi-Arch: same
+
+Package: libparmmg5
+Priority: optional
+Section: libs
+Installed-Size: 1070
+Maintainer: Feel++ Packaging Team <contact@feelpp.org>
+Architecture: amd64
+Source: parmmg
+Version: 1.5.0-1
+Depends: libc6 (>= 2.29), libgcc-s1 (>= 3.3.1), libhdf5-openmpi-103-1t64 (>= 1.10.0), libmetis5 (>= 5.1.0.dfsg), libmmg5 (>= 5.8.0), libopenmpi3t64 (>= 4.1.6), libstdc++6 (>= 13.1)
+Filename: pool/base/p/parmmg/libparmmg5_1.5.0-1_amd64.deb
+Size: 397624
+MD5sum: 233e94d0636697811577c2d8274f96db
+SHA1: d515155fd787ecae1dd1677a28e52fd36cc179fc
+SHA256: 24d9cc0341e32d5abdf75b2b32990a95c8a709210a515dae1ae605e3992d0c83
+SHA512: da4d8fd93e7b1dc622de50052f91b1e6d805b05eb962aa47988f58ffda9b382eb5e36cbc4e0a8814c963c12c41193721d2d0bb1cd728f0be5450a35bd91d8bcb
+Description: Parallel simplicial remeshing libraries (shared objects)
+ The ParMmg project provides shared libraries that implement parallel mesh
+ adaptation and optimisation for 3D tetrahedral meshes. This package contains
+ the runtime shared objects required by software that depends on ParMmg.
+Homepage: https://github.com/MmgTools/ParMmg
+Multi-Arch: same
+
+Package: mmg
+Priority: optional
+Section: science
+Installed-Size: 92
+Maintainer: Feel++ Packaging Team <contact@feelpp.org>
+Architecture: amd64
+Version: 5.8.0-1feelpp1
+Depends: libc6 (>= 2.34), libmmg5 (= 5.8.0-1feelpp1)
+Filename: pool/base/m/mmg/mmg_5.8.0-1feelpp1_amd64.deb
+Size: 22866
+MD5sum: 84c65a55e70dfa5cf16a5ed6b3adbf81
+SHA1: 99409b43c0361f695aafd940ed55f5251c6a64c0
+SHA256: 55691bdaf9fbfcfac126addd8cadc10777641a44755f095184f67cdb8e1ba547
+SHA512: 322fa62ec119fab1d3fe81e82376c3cdacfaa00eb0527c433abd612bc7aa5982a1c0c89214d0526a53bf9cefab62238d30cedb251540d491b0d4ae7153ce0c96
+Description: Simplicial remeshing tools
+ Mmg provides standalone remeshing executables for 2D, surface, and
+ volume meshes. The tools can adapt existing meshes, discretise level
+ sets, and generate new meshes using the same algorithms as the mmg
+ libraries.
+Homepage: https://www.mmgtools.org/
+
+Package: parmmg
+Priority: optional
+Section: science
+Installed-Size: 31
+Maintainer: Feel++ Packaging Team <contact@feelpp.org>
+Architecture: amd64
+Version: 1.5.0-1
+Depends: libc6 (>= 2.34), libmmg5 (>= 5.8.0), libopenmpi3t64 (>= 4.1.6), libparmmg5 (= 1.5.0-1)
+Filename: pool/base/p/parmmg/parmmg_1.5.0-1_amd64.deb
+Size: 8018
+MD5sum: fd1661267fae653c3e2f9cf43a3b3a75
+SHA1: c97e4662be61a31c3061f42492cbae097164cc5d
+SHA256: 3e4023220a99f6a4d4ef3c8c23aeaea5ab40e90c32200813a893da08b3f98603
+SHA512: ee6a03a526160ba7664d6e5fab353253df2fd6b877edeed09dc8c8f7165a02c8e12b0e8d5cf0307c1e417a637ac23d84c33e8b55b53331e2de665ed65b8b96cc
+Description: Parallel 3D volume remesher
+ ParMmg is an open source software for parallel mesh adaptation of 3D volume
+ meshes. The parallel mesh adaptation algorithm is based on iterative remeshing
+ and repartitioning of the distributed mesh. ParMmg uses the Mmg software to
+ perform the sequential remeshing steps.
+Homepage: https://github.com/MmgTools/ParMmg
+
