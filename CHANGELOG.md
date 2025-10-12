@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2025-10-12
+
+### Fixed
+- **Critical**: First-time publications to new distributions now specify architectures explicitly
+- Fixed "unable to figure out list of architectures" error for arch-independent packages
+- Both empty and non-empty first-time publications now support amd64 and arm64
+- Publications can now be created on new distributions (e.g., Debian trixie) without errors
+
+### Technical Details
+- Always specify `-architectures amd64,arm64` for first-time publications
+- Previously only specified architectures for empty snapshots
+- Ensures multi-architecture support from the start of new distributions
+- Architecture-independent (`_all`) packages now work correctly for first-time publications
+
 ## [1.2.0] - 2025-10-12
 
 ### Added
@@ -84,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for custom aptly configurations
 - Verbose logging mode
 
+[1.2.1]: https://github.com/feelpp/apt/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/feelpp/apt/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/feelpp/apt/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/feelpp/apt/releases/tag/v1.0.0

@@ -6,7 +6,7 @@ Author: Christophe Prud'homme <christophe.prudhomme@cemosis.fr>
 This file is part of Feel++ Aptly Publisher.
 """
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 __author__ = "Christophe Prud'homme"
 __email__ = "christophe.prudhomme@cemosis.fr"
 
