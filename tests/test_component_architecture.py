@@ -14,7 +14,6 @@ Tests verify:
 5. All three channels (stable, testing, pr)
 """
 
-import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -578,6 +577,6 @@ def test_empty_bootstrap_component(arch_git_repo):
 
         # Verify Packages file exists (but may be empty for empty component)
         packages_file = check_dir / "testing" / "dists" / "noble" / "future-layer" / "binary-amd64" / "Packages"
-        assert packages_file.exists(), f"Packages file missing for future-layer"
+        assert packages_file.exists(), "Packages file missing for future-layer"
         # Empty component legitimately has empty Packages file
-        assert packages_file.stat().st_size == 0, f"Packages file should be empty for empty component"
+        assert packages_file.stat().st_size == 0, "Packages file should be empty for empty component"
