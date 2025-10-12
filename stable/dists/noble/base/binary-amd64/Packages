@@ -1,3 +1,80 @@
+Package: libmmg-dev
+Priority: optional
+Section: libdevel
+Installed-Size: 977
+Maintainer: Feel++ Packaging Team <contact@feelpp.org>
+Architecture: amd64
+Source: mmg
+Version: 5.8.0-1feelpp1
+Depends: libmmg5 (= 5.8.0-1feelpp1)
+Filename: pool/base/m/mmg/libmmg-dev_5.8.0-1feelpp1_amd64.deb
+Size: 86062
+MD5sum: c9d6035a7bb19bc938e9f700a3906676
+SHA1: 72babf0a28b58a18f0ec21a5f3af48ebb6798299
+SHA256: e32d95473256e37ceb901c2de7db91f36bca6803f744b3c6bf21d172b82dd888
+SHA512: 37f70a14adcc8124bd8380dbc3c3f0cdfc2a189a93d7c5c0c7ea1da62607e9415f3fd6afc389ee9479c60a88021cae206268d7caca55e8b387e7d82e9cc6e49f
+Description: Development files for mmg remeshing libraries
+ Install the development headers, CMake configuration files, and other
+ artifacts necessary to build software against mmg. Private headers are
+ shipped to support downstream projects such as parmmg that extend mmg.
+Homepage: https://www.mmgtools.org/
+Multi-Arch: same
+
+Package: libmmg5
+Priority: optional
+Section: libs
+Installed-Size: 3767
+Maintainer: Feel++ Packaging Team <contact@feelpp.org>
+Architecture: amd64
+Source: mmg
+Version: 5.8.0-1feelpp1
+Depends: libc6 (>= 2.34), libscotch-7.0 (>= 7.0.4)
+Filename: pool/base/m/mmg/libmmg5_5.8.0-1feelpp1_amd64.deb
+Size: 856298
+MD5sum: 4fd13ff95fe2562f8d7f995aba531fd9
+SHA1: 620cf6005f994354b6f138f892cc4c28e8221162
+SHA256: e751a30600e13b6d13d304ff7e480dc47066a2b39366d31f0a2e1b960f73f98c
+SHA512: 9b1e1ab245927acd4a4042c98140fa7f20c7ddf1aef227fd392293f8686488ff7e1f110b97a07d5177de73201943b02a225772006d61a6f8db817c3a94f83066
+Description: Simplicial remeshing libraries (shared objects)
+ The mmg project ships shared libraries that implement mesh adaptation
+ and optimisation for 2D, surface, and 3D tetrahedral meshes. This
+ package contains the runtime shared objects required by software that
+ depends on mmg.
+Homepage: https://www.mmgtools.org/
+Multi-Arch: same
+
+Package: libnapp-dev
+Priority: optional
+Section: libdevel
+Installed-Size: 88
+Maintainer: Christophe Prud'homme <christophe.prudhomme@cemosis.fr>
+Architecture: all
+Source: napp
+Version: 0.3-1feelpp1
+Filename: pool/base/n/napp/libnapp-dev_0.3-1feelpp1_all.deb
+Size: 9374
+MD5sum: 4a9e69784b1c214a26f16d3898d89a13
+SHA1: 92aab3654cce330d285bc94a373b675a5819e31f
+SHA256: db0dfa6cbb4c20fd471765e89a93eb2fa3c542e8be0f0aa0b1e0143aa7096410
+SHA512: 8baf1c6f02adee61d0c54e29f887b40771f9e803414e40833ca85b264793ad7b1b5d4d252511cf060da99a22446c4c93e9eacbb0e3bc8d0fae83bc7b5bccacac
+Description: Named Arguments in C++ - header-only library
+ NAPP (Named Arguments) is a modern C++ header-only library that provides
+ named arguments support for C++ functions. It allows passing arguments by
+ name rather than position, similar to Python's keyword arguments.
+ .
+ Features:
+  * Arguments given by value
+  * Arguments given by reference (lvalue or rvalue)
+  * Static arguments
+  * Default values
+  * Support for both template and non-template functions
+  * Header-only, no runtime dependencies
+ .
+ This package contains the header files needed to develop applications
+ using the NAPP library.
+Homepage: https://github.com/feelpp/napp
+Multi-Arch: foreign
+
 Package: libparmmg-dev
 Priority: optional
 Section: libdevel
@@ -41,6 +118,27 @@ Description: Parallel simplicial remeshing libraries (shared objects)
  the runtime shared objects required by software that depends on ParMmg.
 Homepage: https://github.com/MmgTools/ParMmg
 Multi-Arch: same
+
+Package: mmg
+Priority: optional
+Section: science
+Installed-Size: 92
+Maintainer: Feel++ Packaging Team <contact@feelpp.org>
+Architecture: amd64
+Version: 5.8.0-1feelpp1
+Depends: libc6 (>= 2.34), libmmg5 (= 5.8.0-1feelpp1)
+Filename: pool/base/m/mmg/mmg_5.8.0-1feelpp1_amd64.deb
+Size: 22864
+MD5sum: 07390a32a9c872c2190d657a4a5f5854
+SHA1: ca82feb1e197da68c61437c7d6fcfe3bcd9bb3d7
+SHA256: 3c8169c0ad38140d86a9e92b523599de32527654b637287cd6fc47007652343e
+SHA512: 432de5f96ba420167f6eb49bd9b09d90f3d3c20b225733f86b45bd243590d18cf82d7b846d7de3671f8b091907c473ced1f1ed4e3bd7708366317c4114f33993
+Description: Simplicial remeshing tools
+ Mmg provides standalone remeshing executables for 2D, surface, and
+ volume meshes. The tools can adapt existing meshes, discretise level
+ sets, and generate new meshes using the same algorithms as the mmg
+ libraries.
+Homepage: https://www.mmgtools.org/
 
 Package: parmmg
 Priority: optional
