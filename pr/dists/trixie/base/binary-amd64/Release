@@ -1,0 +1,7 @@
+Origin: pr trixie
+Label: pr trixie
+Archive: trixie
+Suite: trixie
+Codename: trixie
+Architecture: amd64
+Component: base
