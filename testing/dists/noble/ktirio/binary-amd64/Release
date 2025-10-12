@@ -1,0 +1,7 @@
+Origin: testing noble
+Label: testing noble
+Archive: noble
+Suite: noble
+Codename: noble
+Architecture: amd64
+Component: ktirio
