@@ -554,5 +554,30 @@ def test_empty_bootstrap_component(arch_git_repo):
     # Bootstrap without packages
     publisher.bootstrap()
 
-    # Verify component exists (even if empty)
-    verify_architecture(arch_git_repo, "testing", "noble", ["future-layer"])
+    # Verify component exists (Packages file exists but is empty for empty components)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        check_dir = Path(tmpdir) / "check"
+        subprocess.run(
+            ["git", "clone", "-b", "gh-pages", str(arch_git_repo), str(check_dir)],
+            check=True,
+            capture_output=True,
+        )
+
+        release_file = check_dir / "testing" / "dists" / "noble" / "Release"
+        assert release_file.exists(), f"Release file not found: {release_file}"
+
+        release_content = release_file.read_text()
+        found_components = None
+        for line in release_content.split("\n"):
+            if line.startswith("Components:"):
+                found_components = set(line.split(":", 1)[1].strip().split())
+                break
+
+        assert found_components is not None, "Components line not found"
+        assert "future-layer" in found_components, f"future-layer not in components: {found_components}"
+
+        # Verify Packages file exists (but may be empty for empty component)
+        packages_file = check_dir / "testing" / "dists" / "noble" / "future-layer" / "binary-amd64" / "Packages"
+        assert packages_file.exists(), f"Packages file missing for future-layer"
+        # Empty component legitimately has empty Packages file
+        assert packages_file.stat().st_size == 0, f"Packages file should be empty for empty component"

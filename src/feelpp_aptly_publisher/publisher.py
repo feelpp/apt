@@ -247,8 +247,10 @@ class AptlyPublisher:
                     sys.exit(1)
                 self.logger.info("Adding %d package(s) ...", len(debs))
                 aptly_run("repo", "add", repo_name, *debs)
+                is_empty = False
             else:
                 self.logger.info("No --debs provided: creating an EMPTY snapshot (bootstrap).")
+                is_empty = True
 
             ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
             snap = f"{repo_name}-{ts}"
@@ -386,7 +388,14 @@ class AptlyPublisher:
                     "-component",
                     self.component,
                     "-force-overwrite",
-                ] + sign_opts
+                ]
+                
+                # For empty snapshots, we must specify architectures explicitly
+                if is_empty:
+                    self.logger.debug("Empty snapshot detected, specifying architectures explicitly")
+                    snapshot_opts.extend(["-architectures", "amd64"])
+                
+                snapshot_opts.extend(sign_opts)
                 aptly_run("publish", "snapshot", *snapshot_opts, snap, publish_prefix)
                 self.logger.info("Successfully created publication %s/%s", self.channel, self.distro)
 
