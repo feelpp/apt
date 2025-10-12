@@ -2,7 +2,25 @@
 
 ## Overview
 
-This document explains how to migrate existing packages from their individual components (`mmg`, `parmmg`) to the unified `base` component in the Feel++ APT repository.
+This document explains how to migrate existing packages from their individual components (`mmg`, `parmmg`, `ktirio-urban-building`) to the new layer-based component structure in the Feel++ APT repository.
+
+## Updated Component Structure
+
+The repository now uses a 4-component layer-based structure:
+
+```
+base ─┬─> feelpp ──> applications
+      └────────────> ktirio
+```
+
+### Components:
+
+1. **`base`**: External dependencies (mmg, parmmg, napp, etc.)
+2. **`feelpp`**: Feel++ core framework
+3. **`applications`**: General Feel++ applications (organ-on-chip, feelpp-project, sepsis)
+4. **`ktirio`**: KTIRIO domain stack (urban-building, geom, data)
+
+**Note:** `ktirio-urban-building` belongs in the `ktirio` component, not `applications`, since KTIRIO is its own domain stack built on Feel++.
 
 ## Question: Can we move mmg and parmmg from stable to base component?
 
@@ -104,7 +122,7 @@ wget https://feelpp.github.io/apt/stable/pool/parmmg/p/parmmg/parmmg_1.5.0-1_amd
 After migration, the `stable/noble` publication will have multiple components:
 
 ```
-Components: base ktirio-urban-building mmg parmmg
+Components: base ktirio mmg parmmg
 ```
 
 ### Base Component Contains:
@@ -116,12 +134,14 @@ Components: base ktirio-urban-building mmg parmmg
 - `libparmmg-dev` (1.5.0-1)
 - `parmmg` (1.5.0-1)
 
+### KTIRIO Component Contains:
+- `ktirio-urban-building` (moved from individual component)
+- Other KTIRIO packages (ktirio-geom, ktirio-data, etc. when added)
+
 ### Old Components (Deprecated):
 - `mmg`: Same packages (for backward compatibility)
 - `parmmg`: Same packages (for backward compatibility)
-
-### Other Components (Unchanged):
-- `ktirio-urban-building`: Preserved as-is
+- `ktirio-urban-building`: Same package (for backward compatibility)
 
 ## User Experience
 
@@ -135,15 +155,27 @@ deb https://feelpp.github.io/apt/stable noble mmg
 
 # /etc/apt/sources.list.d/feelpp-parmmg.list
 deb https://feelpp.github.io/apt/stable noble parmmg
+
+# /etc/apt/sources.list.d/feelpp-ktirio.list
+deb https://feelpp.github.io/apt/stable noble ktirio-urban-building
 ```
 
 ### After Migration
 
-Users can use a single APT source:
+Users can use logical component groupings:
 
 ```bash
+# For core dependencies only
 # /etc/apt/sources.list.d/feelpp-base.list
 deb https://feelpp.github.io/apt/stable noble base
+
+# For Feel++ with dependencies
+# /etc/apt/sources.list.d/feelpp.list
+deb https://feelpp.github.io/apt/stable noble base feelpp
+
+# For KTIRIO stack
+# /etc/apt/sources.list.d/feelpp-ktirio.list
+deb https://feelpp.github.io/apt/stable noble base feelpp ktirio
 ```
 
 ### Backward Compatibility
