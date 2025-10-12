@@ -204,6 +204,19 @@ jobs:
         ref: main
         path: apt-repo
     
+    - name: Configure git credentials for GitHub
+      run: |
+        # Configure git globally
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Set up git credential helper to use GitHub token
+        git config --global credential.helper store
+        echo "https://x-access-token:${{ github.token }}@github.com" > ~/.git-credentials
+        chmod 600 ~/.git-credentials
+        
+        echo "Git authentication configured for GitHub"
+    
     - name: Setup aptly and publish
       uses: feelpp/setup-aptly@v2
       with:
