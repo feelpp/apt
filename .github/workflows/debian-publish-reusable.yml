@@ -54,6 +54,9 @@ on:
       gpg-passphrase:
         description: 'GPG passphrase for signing'
         required: false
+      apt-repo-token:
+        description: 'GitHub PAT with write access to feelpp/apt repository (required for publishing)'
+        required: false
 
 jobs:
   build-deb:
@@ -240,9 +243,10 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # Set up git credential helper to use GitHub token
+        # Set up git credential helper to use provided token (or fallback to github.token)
         git config --global credential.helper store
-        echo "https://x-access-token:${{ github.token }}@github.com" > ~/.git-credentials
+        TOKEN="${{ secrets.apt-repo-token || github.token }}"
+        echo "https://x-access-token:${TOKEN}@github.com" > ~/.git-credentials
         chmod 600 ~/.git-credentials
         
         echo "Git authentication configured for GitHub"
