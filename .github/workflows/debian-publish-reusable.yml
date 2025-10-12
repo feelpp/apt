@@ -131,11 +131,12 @@ jobs:
         echo "Building from: $DSC_FILE"
         
         # pbuilder-dist builds the package in a clean chroot
-        # Results are placed in ~/pbuilder/<dist>-<arch>_result/
+        # Results are placed in ~/pbuilder/<dist>_result/ (note: no arch suffix in result dir)
         pbuilder-dist ${{ matrix.distribution }} ${{ matrix.architecture }} build "$DSC_FILE"
         
         echo "Build completed successfully!"
-        ls -lh ~/pbuilder/${{ matrix.distribution }}-${{ matrix.architecture }}_result/*.deb
+        # The result directory is named <dist>_result (not <dist>-<arch>_result)
+        ls -lh ~/pbuilder/${{ matrix.distribution }}_result/*.deb
     
     - name: Build Debian package (legacy mode)
       if: ${{ !inputs.use-pbuilder }}
@@ -153,8 +154,8 @@ jobs:
         mkdir -p debian-packages
         
         if [ "${{ inputs.use-pbuilder }}" = "true" ]; then
-          # pbuilder-dist results are in ~/pbuilder/<dist>-<arch>_result/
-          RESULT_DIR=~/pbuilder/${{ matrix.distribution }}-${{ matrix.architecture }}_result
+          # pbuilder-dist results are in ~/pbuilder/<dist>_result/ (no arch suffix)
+          RESULT_DIR=~/pbuilder/${{ matrix.distribution }}_result
           if ls $RESULT_DIR/*.deb 1> /dev/null 2>&1; then
             cp $RESULT_DIR/*.deb debian-packages/
             echo "Collected pbuilder packages:"
