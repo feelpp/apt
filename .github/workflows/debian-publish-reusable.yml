@@ -56,7 +56,7 @@ jobs:
     - name: Install base build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y debhelper cmake devscripts
+        sudo apt-get install -y build-essential debhelper cmake devscripts
     
     - name: Install additional dependencies
       if: inputs.build-dependencies != ''
