@@ -54,6 +54,11 @@ jobs:
     - name: Install aptly
       uses: feelpp/setup-aptly@v1
 
+    - name: Configure git for tests
+      run: |
+        git config --global user.email "ci@github.com"
+        git config --global user.name "GitHub Actions"
+
     - name: Run integration tests with pytest
       run: |
         source .venv/bin/activate
