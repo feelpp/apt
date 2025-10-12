@@ -1,8 +1,14 @@
-"""Feel++ Aptly Publisher - Publish Debian packages to APT repository via GitHub Pages."""
+"""Feel++ Aptly Publisher - Publish Debian packages to APT repository via GitHub Pages.
 
-__version__ = "1.0.0"
-__author__ = "Feel++ Consortium"
-__email__ = "contact@feelpp.org"
+Copyright (c) 2025 University of Strasbourg
+Author: Christophe Prud'homme <christophe.prudhomme@cemosis.fr>
+
+This file is part of Feel++ Aptly Publisher.
+"""
+
+__version__ = "1.2.0"
+__author__ = "Christophe Prud'homme"
+__email__ = "christophe.prudhomme@cemosis.fr"
 
 from .publisher import AptlyPublisher
 

@@ -1,4 +1,10 @@
-"""Core publishing logic for aptly-based APT repository management."""
+"""Core publishing logic for aptly-based APT repository management.
+
+Copyright (c) 2025 University of Strasbourg
+Author: Christophe Prud'homme <christophe.prudhomme@cemosis.fr>
+
+This file is part of Feel++ Aptly Publisher.
+"""
 
 import json
 import logging

@@ -1,4 +1,10 @@
-"""Command-line interface for aptly publisher."""
+"""Command-line interface for aptly publisher.
+
+Copyright (c) 2025 University of Strasbourg
+Author: Christophe Prud'homme <christophe.prudhomme@cemosis.fr>
+
+This file is part of Feel++ Aptly Publisher.
+"""
 
 import argparse
 import os
