@@ -204,6 +204,26 @@ class AptlyPublisher:
             aptly_public.mkdir(parents=True, exist_ok=True)
             self._run(["rsync", "-a", f"{pages}/", f"{aptly_public}/"], check=True)
 
+            # Recover aptly database from published repository if it exists
+            # This is necessary so aptly knows about existing publications
+            inrelease_check = aptly_public / self.channel / "dists" / self.distro / "InRelease"
+            if inrelease_check.exists():
+                self.logger.info("Recovering aptly database from existing publication...")
+                # Capture output to see what was recovered
+                recover_proc = subprocess.run(
+                    base_cmd + ["db", "recover"], env=aptly_env, capture_output=True, text=True
+                )
+                if recover_proc.returncode == 0:
+                    self.logger.info("Successfully recovered aptly database")
+                    if self.verbose and recover_proc.stdout:
+                        for line in recover_proc.stdout.strip().split("\n"):
+                            self.logger.debug("  recover: %s", line)
+                else:
+                    self.logger.warning(
+                        "Could not recover aptly database: %s",
+                        recover_proc.stderr if recover_proc.stderr else "unknown error",
+                    )
+
             # Stage repo and snapshot
             repo_name = f"{self.component}-{self.distro}-{self.channel}"
             self.logger.info("Staging repo: %s", repo_name)
@@ -228,39 +248,153 @@ class AptlyPublisher:
             snap = f"{repo_name}-{ts}"
             aptly_run("snapshot", "create", snap, "from", "repo", repo_name)
 
-            # Publish or switch
+            # Publish or switch or add
             publish_prefix = self.channel
-            snapshot_opts = ["-distribution", self.distro, "-component", self.component]
-            switch_opts = ["-component", self.component]
             sign_opts: List[str] = []
             if self.sign:
                 sign_opts = ["-gpg-key", self.keyid]  # type: ignore
                 if self.passphrase:
                     sign_opts += ["-passphrase", self.passphrase]
-                snapshot_opts += sign_opts
-                switch_opts += sign_opts
             else:
-                snapshot_opts += ["-skip-signing"]
-                switch_opts += ["-skip-signing"]
+                sign_opts = ["-skip-signing"]
 
-            # Try to switch first (update), fallback to snapshot (first publish)
-            switch_result = aptly_run("publish", "switch", *switch_opts, self.distro, publish_prefix, snap, check=False)
-            if switch_result.returncode != 0:
-                self.logger.info("Switch failed, doing first-time publish %s/%s ...", self.channel, self.distro)
-                aptly_run("publish", "snapshot", *snapshot_opts, snap, publish_prefix)
-            else:
-                self.logger.info("Successfully updated existing publication %s/%s", self.channel, self.distro)
+            # Check if publication exists by looking at Release/InRelease file in the published repository
+            # Note: When using --skip-signing, InRelease might be stale, so check Release file
+            # This is more reliable than aptly's database after rsync
+            existing_components = []
+            our_publication_exists = False
 
-            # Refresh metadata
-            update_opts = sign_opts if sign_opts else ["-skip-signing"]
-            update_result = aptly_run("publish", "update", *update_opts, self.distro, publish_prefix, check=False)
-            if update_result.returncode == 0:
-                self.logger.info("Refreshed publication metadata %s/%s", self.channel, self.distro)
+            # Check both Release and InRelease (Release is more up-to-date with skip-signing)
+            release_path = aptly_public / self.channel / "dists" / self.distro / "Release"
+            inrelease_path = aptly_public / self.channel / "dists" / self.distro / "InRelease"
+
+            # Prefer Release file as it's always up-to-date
+            check_path = release_path if release_path.exists() else inrelease_path
+
+            if check_path.exists():
+                our_publication_exists = True
+                self.logger.info("Found existing publication at %s/%s", self.channel, self.distro)
+
+                # Parse the file to get existing components
+                release_content = check_path.read_text(encoding="utf-8")
+                for line in release_content.split("\n"):
+                    if line.startswith("Components:"):
+                        components_str = line.split(":", 1)[1].strip()
+                        existing_components = [c.strip() for c in components_str.split()]
+                        self.logger.info("Existing components: %s", ", ".join(existing_components))
+                        break
             else:
-                self.logger.warning(
-                    "Failed to refresh metadata via 'aptly publish update' (exit=%s); continuing",
-                    update_result.returncode,
+                self.logger.info("No existing publication found at %s/%s", self.channel, self.distro)
+
+            # Decide on action: add/update component or create new publication
+            if our_publication_exists:
+                # Publication exists - need to republish with all components
+                # Since db recover doesn't fully restore publication metadata, we can't use switch
+                # Instead, we'll drop the publication and republish all components together
+                if self.component in existing_components:
+                    self.logger.info(
+                        "Updating existing component '%s' in %s/%s ...", self.component, self.channel, self.distro
+                    )
+                    # Remove this component from existing list and add it back with new packages
+                    existing_components = [c for c in existing_components if c != self.component]
+                    if existing_components:
+                        self.logger.info("Existing components will be preserved: %s", ", ".join(existing_components))
+                    else:
+                        self.logger.info("This is the only component in the publication")
+                else:
+                    self.logger.info(
+                        "Adding new component '%s' to %s/%s ...", self.component, self.channel, self.distro
+                    )
+                    self.logger.info("Existing components will be preserved: %s", ", ".join(existing_components))
+
+                # Create snapshots for existing components from their published packages
+                all_snapshots = []
+                all_components = []
+
+                for existing_comp in existing_components:
+                    # Create a temporary repo for this component
+                    temp_repo_name = f"{existing_comp}-temp-{ts}"
+                    self.logger.debug("Creating temporary repo for existing component: %s", existing_comp)
+                    aptly_run(
+                        "repo",
+                        "create",
+                        f"-component={existing_comp}",
+                        f"-distribution={self.distro}",
+                        temp_repo_name,
+                        check=False,
+                    )
+
+                    # Import packages from the published pool
+                    comp_packages_dir = aptly_public / self.channel / "pool" / existing_comp
+                    if comp_packages_dir.exists():
+                        self.logger.debug("Importing packages from %s", comp_packages_dir)
+                        # Find all .deb files recursively
+                        import glob as glob_module
+
+                        deb_files = glob_module.glob(str(comp_packages_dir / "**" / "*.deb"), recursive=True)
+                        if deb_files:
+                            self.logger.debug("Found %d package(s) for %s", len(deb_files), existing_comp)
+                            aptly_run("repo", "add", temp_repo_name, *deb_files, check=False)
+
+                    # Create snapshot from this temp repo
+                    temp_snap_name = f"{temp_repo_name}-snap"
+                    aptly_run("snapshot", "create", temp_snap_name, "from", "repo", temp_repo_name)
+                    all_snapshots.append(temp_snap_name)
+                    all_components.append(existing_comp)
+
+                # Add our new/updated component
+                all_snapshots.append(snap)
+                all_components.append(self.component)
+
+                # Drop the existing publication (it's not in the database anyway after rsync)
+                self.logger.info("Dropping existing publication to republish with all components...")
+                # We can't drop what's not in the database, so just proceed to publish
+
+                # Publish ALL components together
+                components_str = ",".join(all_components)
+                self.logger.info("Publishing with components: %s", components_str)
+
+                snapshot_opts = [
+                    "-distribution",
+                    self.distro,
+                    "-component",
+                    components_str,
+                    "-force-overwrite",
+                ] + sign_opts
+                publish_result = aptly_run(
+                    "publish", "snapshot", *snapshot_opts, *all_snapshots, publish_prefix, check=False
                 )
+
+                if publish_result.returncode != 0:
+                    self.logger.error("Failed to publish components")
+                    self.logger.error("You may need to republish all components manually")
+                    sys.exit(1)
+
+                self.logger.info("Successfully published component '%s' with all existing components", self.component)
+            else:
+                # Publication doesn't exist - create it
+                self.logger.info("Creating first-time publication %s/%s ...", self.channel, self.distro)
+                snapshot_opts = [
+                    "-distribution",
+                    self.distro,
+                    "-component",
+                    self.component,
+                    "-force-overwrite",
+                ] + sign_opts
+                aptly_run("publish", "snapshot", *snapshot_opts, snap, publish_prefix)
+                self.logger.info("Successfully created publication %s/%s", self.channel, self.distro)
+
+            # Fix InRelease file when skip-signing is used
+            # aptly doesn't update InRelease when using --skip-signing
+            if not self.sign:
+                release_file = aptly_public / self.channel / "dists" / self.distro / "Release"
+                inrelease_file = aptly_public / self.channel / "dists" / self.distro / "InRelease"
+
+                if release_file.exists():
+                    self.logger.info("Updating InRelease file (skip-signing workaround)...")
+                    # Copy Release to InRelease since we're not signing
+                    inrelease_file.write_text(release_file.read_text(encoding="utf-8"), encoding="utf-8")
+                    self.logger.debug("InRelease updated from Release")
 
             # Sync back & push
             self._run(["rsync", "-a", "--delete", f"{aptly_public}/", f"{pages}/"], check=True)

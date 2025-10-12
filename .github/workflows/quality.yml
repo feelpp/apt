@@ -46,10 +46,23 @@ jobs:
         source .venv/bin/activate
         mypy src/
 
-    - name: Run tests with pytest
+    - name: Run unit tests with pytest
       run: |
         source .venv/bin/activate
-        pytest -v --cov=feelpp_aptly_publisher --cov-report=term-missing --cov-report=xml
+        pytest -v -m "not integration" --cov=feelpp_aptly_publisher --cov-report=term-missing --cov-report=xml
+
+    - name: Install aptly
+      uses: feelpp/setup-aptly@v1
+
+    - name: Configure git for tests
+      run: |
+        git config --global user.email "ci@github.com"
+        git config --global user.name "GitHub Actions"
+
+    - name: Run integration tests with pytest
+      run: |
+        source .venv/bin/activate
+        pytest -v -m "integration" --cov=feelpp_aptly_publisher --cov-append --cov-report=term-missing --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
