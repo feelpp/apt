@@ -8,7 +8,6 @@ These tests verify the actual publishing workflow including:
 - Release and InRelease file consistency
 """
 
-import os
 import shutil
 import subprocess
 import tempfile
@@ -91,8 +90,6 @@ def git_repo(tmp_path):
 def check_publication(bare_repo, channel, distro, expected_components):
     """Verify that a publication has the expected components."""
     # Clone the bare repo to check its contents
-    import tempfile
-
     with tempfile.TemporaryDirectory() as tmpdir:
         check_dir = Path(tmpdir) / "check"
         subprocess.run(
