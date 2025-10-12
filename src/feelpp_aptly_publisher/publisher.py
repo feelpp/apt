@@ -390,10 +390,16 @@ class AptlyPublisher:
                     "-force-overwrite",
                 ]
                 
-                # For empty snapshots, we must specify architectures explicitly
+                # For first-time publications, we must specify architectures explicitly
+                # Even for arch:all packages, aptly needs to know target architectures
                 if is_empty:
                     self.logger.debug("Empty snapshot detected, specifying architectures explicitly")
-                    snapshot_opts.extend(["-architectures", "amd64"])
+                    snapshot_opts.extend(["-architectures", "amd64,arm64"])
+                else:
+                    # For non-empty first-time publications, also specify architectures
+                    # to avoid "unable to figure out list of architectures" error
+                    self.logger.debug("First-time publication, specifying architectures: amd64,arm64")
+                    snapshot_opts.extend(["-architectures", "amd64,arm64"])
                 
                 snapshot_opts.extend(sign_opts)
                 aptly_run("publish", "snapshot", *snapshot_opts, snap, publish_prefix)
