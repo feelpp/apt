@@ -4,14 +4,14 @@ Section: science
 Installed-Size: 18798
 Maintainer: Christophe Prud'homme <christophe.prudhomme@cemosis.fr>
 Architecture: amd64
-Version: 0.6.0-preview.1-gitf1d47bf.128
-Depends: libfeelpp1 (>= 0.109), libc6, libgcc-s1, libstdc++6, libann0 (>= 1.1.2+doc), libboost-atomic1.83.0 (>= 1.83.0), libboost-date-time1.83.0 (>= 1.83.0), libboost-filesystem1.83.0 (>= 1.83.0), libboost-iostreams1.83.0 (>= 1.83.0), libboost-mpi1.83.0 (>= 1.83.0), libboost-program-options1.83.0 (>= 1.83.0), libboost-regex1.83.0-icu74, libboost-serialization1.83.0 (>= 1.83.0), libboost-system1.83.0 (>= 1.83.0), libboost-test1.83.0 (>= 1.83.0), libc6 (>= 2.38), libcln6, libcurl4t64 (>= 7.16.2), libfeelpp1, libfftw3-double3 (>= 3.3.10), libfftw3-long3 (>= 3.3.10), libfftw3-mpi3 (>= 3.3.10), libfftw3-single3 (>= 3.3.10), libgcc-s1 (>= 3.3), libgl1, libgl2ps1.4 (>= 1.4.2+dfsg1), libglpk40 (>= 4.59), libgmsh4.12t64 (>= 4.12.1+ds1), libgsl27 (>= 2.7.1), libgslcblas0 (>= 2.7.1), libhdf5-103-1t64, libmetis5 (>= 5.1.0.dfsg), libopenmpi3t64 (>= 4.1.6), libpetsc-real3.19t64 (>= 3.19.6+dfsg1), libscotch-7.0 (>= 7.0.4), libslepc-complex3.19t64 (>= 3.19.2+dfsg1), libstdc++6 (>= 13.1), libxml2 (>= 2.6.27), libzip4t64 (>= 0.10), zlib1g (>= 1:1.1.4)
-Filename: pool/ktirio-urban-building/k/ktirio-urban-building/ktirio-urban-building_0.6.0-preview.1-gitf1d47bf.128_amd64.deb
-Size: 2994162
-MD5sum: 28bd98dfe5b7d96ca68783faa9ad6d04
-SHA1: 9687d401fc9b0bb4c904455d88877e254e2fc6a6
-SHA256: d21ae99c1696f9ef410d4c023116800d1ab46db139f3a6c4fe0f858809f6fecd
-SHA512: 9e62a18a6e8086f4880bba18c8f3453bf37e2ab0f768c4765b555c9a0e553dc2018bf25d01dcd008216ff207fe3d0a561de145a7bd581d0e3cf028f2ba80bcae
+Version: 0.6.0-preview.1-git40d6456.130
+Depends: libfeelpp1 (>= 0.109), libc6, libgcc-s1, libstdc++6, libann0 (>= 1.1.2+doc), libboost-atomic1.83.0 (>= 1.83.0), libboost-date-time1.83.0 (>= 1.83.0), libboost-filesystem1.83.0 (>= 1.83.0), libboost-iostreams1.83.0 (>= 1.83.0), libboost-mpi1.83.0 (>= 1.83.0), libboost-program-options1.83.0 (>= 1.83.0), libboost-regex1.83.0-icu74, libboost-serialization1.83.0 (>= 1.83.0), libboost-system1.83.0 (>= 1.83.0), libboost-test1.83.0 (>= 1.83.0), libc6 (>= 2.38), libcln6, libcurl4t64 (>= 7.16.2), libfeelpp1, libfftw3-double3 (>= 3.3.10), libfftw3-long3 (>= 3.3.10), libfftw3-mpi3 (>= 3.3.10), libfftw3-single3 (>= 3.3.10), libgcc-s1 (>= 3.3), libgl1, libgl2ps1.4 (>= 1.4.2+dfsg1), libglpk40 (>= 4.59), libgmsh4.12t64 (>= 4.12.1+ds1), libgsl27 (>= 2.7.1), libgslcblas0 (>= 2.7.1), libhdf5-103-1t64, libmetis5 (>= 5.1.0.dfsg), libopenmpi3t64 (>= 4.1.6), libpetsc-real3.19t64 (>= 3.19.6+dfsg1), libscotch-7.0 (>= 7.0.4), libslepc-real3.19t64 (>= 3.19.2+dfsg1), libstdc++6 (>= 13.1), libxml2 (>= 2.6.27), libzip4t64 (>= 0.10), zlib1g (>= 1:1.1.4)
+Filename: pool/ktirio-urban-building/k/ktirio-urban-building/ktirio-urban-building_0.6.0-preview.1-git40d6456.130_amd64.deb
+Size: 2994120
+MD5sum: 25e0abeb55fd403f6b5e5be720f26303
+SHA1: e9f8cf0fda604e6de1abbeea825abbc37d7c898e
+SHA256: f8a39c160ce73dc093cb910d0ab3b9ba6091de77edfb4c522b23968a12f3a876
+SHA512: bb0a69d6d8bbc77cfe95a5dfda825aedf4b25d701c6a0946d38a507a47cc8aa686ed21b89d3bee7132f25d5668d6dae369b26bb78ef85dd36bf203dd9b990c97
 Description: Cemosis ktirio-urban-building template application
  Cemosis provides a Feel++ template application.
 Homepage: https://github.com/feelpp/ktirio-urban-building
