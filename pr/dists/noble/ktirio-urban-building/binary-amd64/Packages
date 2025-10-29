@@ -4,14 +4,14 @@ Section: science
 Installed-Size: 33136
 Maintainer: Christophe Prud'homme <christophe.prudhomme@cemosis.fr>
 Architecture: amd64
-Version: 0.7.0-rc.2-git5be1c5b.194
+Version: 0.7.0-rc.2-gitb0a52cd.192
 Depends: libfeelpp1 (>= 0.109), libc6, libgcc-s1, libstdc++6, libann0 (>= 1.1.2+doc), libboost-atomic1.83.0 (>= 1.83.0), libboost-date-time1.83.0 (>= 1.83.0), libboost-filesystem1.83.0 (>= 1.83.0), libboost-iostreams1.83.0 (>= 1.83.0), libboost-mpi1.83.0 (>= 1.83.0), libboost-program-options1.83.0 (>= 1.83.0), libboost-regex1.83.0-icu74, libboost-serialization1.83.0 (>= 1.83.0), libboost-system1.83.0 (>= 1.83.0), libboost-test1.83.0 (>= 1.83.0), libc6 (>= 2.38), libcln6, libcurl4t64 (>= 7.16.2), libfeelpp1, libfftw3-double3 (>= 3.3.10), libfftw3-long3 (>= 3.3.10), libfftw3-mpi3 (>= 3.3.10), libfftw3-single3 (>= 3.3.10), libgcc-s1 (>= 3.3), libgl1, libgl2ps1.4 (>= 1.4.2+dfsg1), libglpk40 (>= 4.59), libgmsh4.12t64 (>= 4.12.1+ds1), libgsl27 (>= 2.7.1), libgslcblas0 (>= 2.7.1), libhdf5-103-1t64, libmetis5 (>= 5.1.0.dfsg), libopenmpi3t64 (>= 4.1.6), libpetsc-real3.19t64 (>= 3.19.6+dfsg1), libscotch-7.0 (>= 7.0.4), libslepc-real3.19t64 (>= 3.19.2+dfsg1), libstdc++6 (>= 13.1), libxml2 (>= 2.6.27), libzip4t64 (>= 0.10), zlib1g (>= 1:1.1.4)
-Filename: pool/ktirio-urban-building/k/ktirio-urban-building/ktirio-urban-building_0.7.0-rc.2-git5be1c5b.194_amd64.deb
-Size: 8376000
-MD5sum: ce4445437da60bb131db7be339e5c256
-SHA1: 1cd6a45ce098ea05ef5b5eac4742ef388a77777f
-SHA256: f627d65338b6fc703785bf41a123b629b2cf454dd5cb2bee50cbbb6d121ce451
-SHA512: a14492d411e31a1f92dbd2043dcdd502d059768a1de61a6efbb0815f16055579718ce719524b448aa2804afa284dfd3ea775edf75279dff705e215a89aca939e
+Filename: pool/ktirio-urban-building/k/ktirio-urban-building/ktirio-urban-building_0.7.0-rc.2-gitb0a52cd.192_amd64.deb
+Size: 8376014
+MD5sum: f95be7a4900414405b32d24835b8ed79
+SHA1: 4365ea88ca35511f96edbfb00311335cabf00fb2
+SHA256: eb62c63e03689a7765534fbd90d5fa892c67e0530423540bf7b7f173990a258b
+SHA512: 2aa936c1614dd613d377f3b7701be2ade7620730dc990eb2f4cb3ecadb4684dcb569ae1c36248263b1013aca730317a6543b0a137bbd9376096c09711fa735a4
 Description: Cemosis ktirio-urban-building template application
  Cemosis provides a Feel++ template application.
 Homepage: https://github.com/feelpp/ktirio-urban-building
