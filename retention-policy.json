@@ -1,0 +1,21 @@
+{
+  "prerelease_max_age_days": 90,
+  "max_versions_per_package": 0,
+  "channel_policies": {
+    "stable": {
+      "keep_prereleases": true,
+      "max_versions": 0
+    },
+    "testing": {
+      "keep_prereleases": false,
+      "max_versions": 5
+    },
+    "pr": {
+      "keep_prereleases": false,
+      "max_versions": 3,
+      "max_age_days": 30
+    }
+  },
+  "protected_components": [],
+  "protected_packages": []
+}

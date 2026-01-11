@@ -1,0 +1,183 @@
+name: Cleanup PR Channel
+
+on:
+  # Triggered by other repos when their PRs are closed
+  repository_dispatch:
+    types: [pr-closed]
+
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: 'PR number to clean up (optional, cleans all old if not specified)'
+        required: false
+        type: string
+      max-age-days:
+        description: 'Maximum age in days for PR packages'
+        required: false
+        default: '30'
+        type: string
+      dry-run:
+        description: 'Dry run (preview only)'
+        required: false
+        default: true
+        type: boolean
+
+  schedule:
+    # Run weekly on Monday at 5 AM UTC to clean old PR packages
+    - cron: '0 5 * * 1'
+
+concurrency:
+  group: pr-channel-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup-pr-channel:
+    name: Clean PR Channel Packages
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout main branch (for CLI tool)
+      uses: actions/checkout@v4
+      with:
+        ref: main
+        path: apt-tool
+
+    - name: Checkout gh-pages branch (repository data)
+      uses: actions/checkout@v4
+      with:
+        ref: gh-pages
+        path: apt-repo
+        fetch-depth: 1
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install feelpp-aptly-publisher
+      run: |
+        cd apt-tool
+        pip install -e .
+
+    - name: Determine execution mode
+      id: mode
+      run: |
+        # For scheduled and repository_dispatch events, always execute
+        if [ "${{ github.event_name }}" == "schedule" ] || [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+          echo "dry_run=false" >> $GITHUB_OUTPUT
+          echo "Scheduled/dispatch run - will execute cleanup"
+        else
+          echo "dry_run=${{ inputs.dry-run || 'true' }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Clean PR packages
+      id: cleanup
+      working-directory: apt-repo
+      env:
+        PR_NUMBER: ${{ inputs.pr-number || github.event.client_payload.pr_number || '' }}
+        MAX_AGE_DAYS: ${{ inputs.max-age-days || '30' }}
+      run: |
+        # Build execute argument
+        EXECUTE_ARG=""
+        if [ "${{ steps.mode.outputs.dry_run }}" == "false" ]; then
+          EXECUTE_ARG="--execute"
+        fi
+
+        # Use default retention policy from repo
+        POLICY_ARG=""
+        if [ -f "../apt-tool/retention-policy.json" ]; then
+          POLICY_ARG="--policy ../apt-tool/retention-policy.json"
+        fi
+
+        # Run cleanup on PR channel only
+        feelpp-apt-publish cleanup \
+          --repo-path . \
+          --channels pr \
+          --max-age-days $MAX_AGE_DAYS \
+          $POLICY_ARG \
+          $EXECUTE_ARG \
+          --json > pr-cleanup-report.json 2>&1 || true
+
+        # Parse results
+        if [ -f pr-cleanup-report.json ]; then
+          TOTAL=$(jq -r '.summary.total_candidates // 0' pr-cleanup-report.json)
+          SIZE=$(jq -r '.summary.total_size_mb // 0' pr-cleanup-report.json)
+          echo "candidates=$TOTAL" >> $GITHUB_OUTPUT
+          echo "size_mb=$SIZE" >> $GITHUB_OUTPUT
+        else
+          echo "candidates=0" >> $GITHUB_OUTPUT
+          echo "size_mb=0" >> $GITHUB_OUTPUT
+        fi
+
+        echo "dry_run=${{ steps.mode.outputs.dry_run }}" >> $GITHUB_OUTPUT
+
+        # Show output
+        cat pr-cleanup-report.json || echo "No report generated"
+
+    - name: Commit changes
+      if: steps.mode.outputs.dry_run == 'false'
+      working-directory: apt-repo
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+        # Check if there are changes
+        if git diff --quiet && git diff --staged --quiet; then
+          echo "No changes to commit"
+          exit 0
+        fi
+
+        COMMIT_MSG="Cleanup PR channel: Remove old packages"
+        if [ -n "${{ inputs.pr-number || github.event.client_payload.pr_number }}" ]; then
+          COMMIT_MSG="$COMMIT_MSG (PR #${{ inputs.pr-number || github.event.client_payload.pr_number }})"
+        fi
+
+        git add -A
+        git commit -m "$COMMIT_MSG
+
+        - Space reclaimed: ${{ steps.cleanup.outputs.size_mb }} MB
+        - Triggered by: ${{ github.event_name }}
+
+        Automated PR cleanup by GitHub Actions" || echo "No changes to commit"
+
+        git push origin gh-pages
+
+    - name: Upload cleanup report
+      uses: actions/upload-artifact@v4
+      with:
+        name: pr-cleanup-report-${{ github.run_id }}
+        path: apt-repo/pr-cleanup-report.json
+        retention-days: 30
+      if: always()
+
+    - name: Generate job summary
+      run: |
+        echo "## PR Channel Cleanup Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [ "${{ steps.mode.outputs.dry_run }}" == "true" ]; then
+          echo "> **Mode:** Dry Run (no changes made)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "> **Mode:** Execute (changes committed)" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        echo "### Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+        if [ -n "${{ inputs.pr-number || github.event.client_payload.pr_number }}" ]; then
+          echo "| Target PR | #${{ inputs.pr-number || github.event.client_payload.pr_number }} |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| Max age | ${{ inputs.max-age-days || '30' }} days |" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "| Trigger | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        echo "### Results" >> $GITHUB_STEP_SUMMARY
+        echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Cleanup candidates | ${{ steps.cleanup.outputs.candidates }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Space to reclaim | ${{ steps.cleanup.outputs.size_mb }} MB |" >> $GITHUB_STEP_SUMMARY

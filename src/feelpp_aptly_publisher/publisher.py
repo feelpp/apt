@@ -36,6 +36,7 @@ class AptlyPublisher:
         aptly_config: Optional[str] = None,
         aptly_root: Optional[str] = None,
         verbose: bool = False,
+        auto_bump: bool = False,
     ):
         """
         Initialize the publisher.
@@ -52,6 +53,7 @@ class AptlyPublisher:
             aptly_config: Path to aptly config file (optional)
             aptly_root: Override aptly root directory (optional)
             verbose: Enable verbose logging
+            auto_bump: Auto-bump Debian revision on version conflict (default: False, use force-overwrite)
         """
         self.component = self._normalize_component(component)
         self.distro = distro
@@ -64,6 +66,7 @@ class AptlyPublisher:
         self.aptly_config = aptly_config
         self.aptly_root = aptly_root
         self.verbose = verbose
+        self.auto_bump = auto_bump
 
         # Configure logging
         logging.basicConfig(

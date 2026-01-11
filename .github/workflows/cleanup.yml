@@ -1,0 +1,199 @@
+name: Cleanup Old Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      max-age-days:
+        description: 'Maximum age in days for pre-release packages'
+        required: false
+        default: '90'
+        type: string
+      channel:
+        description: 'Channel to clean (all, stable, testing, pr)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - stable
+          - testing
+          - pr
+      include-stable-prereleases:
+        description: 'Include pre-releases in stable channel'
+        required: false
+        default: false
+        type: boolean
+      max-versions-per-package:
+        description: 'Maximum versions to keep per package (0 = unlimited)'
+        required: false
+        default: '0'
+        type: string
+      dry-run:
+        description: 'Dry run (preview only, no deletion)'
+        required: false
+        default: true
+        type: boolean
+  schedule:
+    # Run monthly on the 1st at 4 AM UTC
+    - cron: '0 4 1 * *'
+
+# Ensure only one cleanup runs at a time
+concurrency:
+  group: apt-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Clean Old Packages
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout main branch (for CLI tool)
+      uses: actions/checkout@v4
+      with:
+        ref: main
+        path: apt-tool
+
+    - name: Checkout gh-pages branch (repository data)
+      uses: actions/checkout@v4
+      with:
+        ref: gh-pages
+        path: apt-repo
+        fetch-depth: 1
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install feelpp-aptly-publisher
+      run: |
+        cd apt-tool
+        pip install -e .
+
+    - name: Determine execution mode
+      id: mode
+      run: |
+        # For scheduled runs, always execute (not dry-run)
+        if [ "${{ github.event_name }}" == "schedule" ]; then
+          echo "dry_run=false" >> $GITHUB_OUTPUT
+          echo "Scheduled run - will execute cleanup"
+        else
+          echo "dry_run=${{ inputs.dry-run || 'true' }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Analyze and cleanup packages
+      id: cleanup
+      working-directory: apt-repo
+      run: |
+        # Build channel argument
+        CHANNEL_ARG=""
+        if [ "${{ inputs.channel || 'all' }}" != "all" ]; then
+          CHANNEL_ARG="--channels ${{ inputs.channel }}"
+        fi
+
+        # Build include-stable argument
+        INCLUDE_STABLE_ARG=""
+        if [ "${{ inputs.include-stable-prereleases }}" == "true" ]; then
+          INCLUDE_STABLE_ARG="--include-stable-prereleases"
+        fi
+
+        # Build execute argument
+        EXECUTE_ARG=""
+        if [ "${{ steps.mode.outputs.dry_run }}" == "false" ]; then
+          EXECUTE_ARG="--execute"
+        fi
+
+        # Use default retention policy from repo
+        POLICY_ARG=""
+        if [ -f "../apt-tool/retention-policy.json" ]; then
+          POLICY_ARG="--policy ../apt-tool/retention-policy.json"
+        fi
+
+        # Run cleanup using the CLI
+        feelpp-apt-publish cleanup \
+          --repo-path . \
+          --max-age-days ${{ inputs.max-age-days || '90' }} \
+          --max-versions ${{ inputs.max-versions-per-package || '0' }} \
+          $CHANNEL_ARG \
+          $INCLUDE_STABLE_ARG \
+          $POLICY_ARG \
+          $EXECUTE_ARG \
+          --json > cleanup-report.json 2>&1 || true
+
+        # Parse results for GitHub outputs
+        if [ -f cleanup-report.json ]; then
+          TOTAL=$(jq -r '.summary.total_candidates // 0' cleanup-report.json)
+          SIZE=$(jq -r '.summary.total_size_mb // 0' cleanup-report.json)
+          echo "candidates=$TOTAL" >> $GITHUB_OUTPUT
+          echo "size_mb=$SIZE" >> $GITHUB_OUTPUT
+        else
+          echo "candidates=0" >> $GITHUB_OUTPUT
+          echo "size_mb=0" >> $GITHUB_OUTPUT
+        fi
+
+        echo "dry_run=${{ steps.mode.outputs.dry_run }}" >> $GITHUB_OUTPUT
+
+        # Show output
+        cat cleanup-report.json || echo "No report generated"
+
+    - name: Commit changes
+      if: steps.mode.outputs.dry_run == 'false'
+      working-directory: apt-repo
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+        # Check if there are changes
+        if git diff --quiet && git diff --staged --quiet; then
+          echo "No changes to commit"
+          exit 0
+        fi
+
+        git add -A
+        git commit -m "Cleanup: Remove old packages
+
+        - Pre-release packages older than ${{ inputs.max-age-days || '90' }} days
+        - Space reclaimed: ${{ steps.cleanup.outputs.size_mb }} MB
+        - Channels: ${{ inputs.channel || 'all' }}
+
+        Automated cleanup by GitHub Actions" || echo "No changes to commit"
+
+        git push origin gh-pages
+
+    - name: Upload cleanup report
+      uses: actions/upload-artifact@v4
+      with:
+        name: cleanup-report-${{ github.run_id }}
+        path: apt-repo/cleanup-report.json
+        retention-days: 90
+      if: always()
+
+    - name: Generate job summary
+      run: |
+        echo "## APT Repository Cleanup Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [ "${{ steps.mode.outputs.dry_run }}" == "true" ]; then
+          echo "> **Mode:** Dry Run (no changes made)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "> **Mode:** Execute (changes committed)" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        echo "### Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Max age for pre-releases | ${{ inputs.max-age-days || '90' }} days |" >> $GITHUB_STEP_SUMMARY
+        echo "| Channel | ${{ inputs.channel || 'all' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Max versions per package | ${{ inputs.max-versions-per-package || 'unlimited' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        echo "### Results" >> $GITHUB_STEP_SUMMARY
+        echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Cleanup candidates | ${{ steps.cleanup.outputs.candidates }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Space to reclaim | ${{ steps.cleanup.outputs.size_mb }} MB |" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,123 @@
+name: Cleanup Analysis (Dry Run)
+
+on:
+  workflow_dispatch:
+    inputs:
+      max-age-days:
+        description: 'Maximum age in days for pre-release packages (alpha/beta/rc)'
+        required: false
+        default: '90'
+        type: string
+      channel:
+        description: 'Channel to analyze (all, stable, testing, pr)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - stable
+          - testing
+          - pr
+      include-stable-prereleases:
+        description: 'Include pre-releases in stable channel (normally kept)'
+        required: false
+        default: false
+        type: boolean
+      max-versions-per-package:
+        description: 'Maximum versions to keep per package (0 = unlimited)'
+        required: false
+        default: '0'
+        type: string
+  schedule:
+    # Run weekly on Sunday at 3 AM UTC to report what could be cleaned
+    - cron: '0 3 * * 0'
+
+jobs:
+  analyze:
+    name: Analyze Packages for Cleanup
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout main branch (for CLI tool)
+      uses: actions/checkout@v4
+      with:
+        ref: main
+        path: apt-tool
+
+    - name: Checkout gh-pages branch (repository data)
+      uses: actions/checkout@v4
+      with:
+        ref: gh-pages
+        path: apt-repo
+        fetch-depth: 1
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install feelpp-aptly-publisher
+      run: |
+        cd apt-tool
+        pip install -e .
+
+    - name: Analyze repository for cleanup candidates
+      id: analyze
+      run: |
+        # Build channel argument
+        CHANNEL_ARG=""
+        if [ "${{ inputs.channel || 'all' }}" != "all" ]; then
+          CHANNEL_ARG="--channels ${{ inputs.channel }}"
+        fi
+
+        # Build include-stable argument
+        INCLUDE_STABLE_ARG=""
+        if [ "${{ inputs.include-stable-prereleases }}" == "true" ]; then
+          INCLUDE_STABLE_ARG="--include-stable-prereleases"
+        fi
+
+        # Use default retention policy from repo
+        POLICY_ARG=""
+        if [ -f "./apt-tool/retention-policy.json" ]; then
+          POLICY_ARG="--policy ./apt-tool/retention-policy.json"
+        fi
+
+        # Run analysis using the CLI
+        feelpp-apt-publish analyze \
+          --repo-path ./apt-repo \
+          --max-age-days ${{ inputs.max-age-days || '90' }} \
+          --max-versions ${{ inputs.max-versions-per-package || '0' }} \
+          $CHANNEL_ARG \
+          $INCLUDE_STABLE_ARG \
+          $POLICY_ARG \
+          --output cleanup-report.json \
+          --github-output
+
+    - name: Upload cleanup report
+      uses: actions/upload-artifact@v4
+      with:
+        name: cleanup-report
+        path: cleanup-report.json
+        retention-days: 30
+
+    - name: Generate job summary
+      run: |
+        echo "## APT Repository Cleanup Analysis" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Max age for pre-releases | ${{ inputs.max-age-days || '90' }} days |" >> $GITHUB_STEP_SUMMARY
+        echo "| Channel filter | ${{ inputs.channel || 'all' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Include stable pre-releases | ${{ inputs.include-stable-prereleases || 'false' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Max versions per package | ${{ inputs.max-versions-per-package || 'unlimited' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Results" >> $GITHUB_STEP_SUMMARY
+        echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Total packages | ${{ steps.analyze.outputs.total_packages }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Cleanup candidates | ${{ steps.analyze.outputs.cleanup_count }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Space to reclaim | ${{ steps.analyze.outputs.cleanup_size_mb }} MB |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "> **Note:** This is a dry run. No packages were deleted." >> $GITHUB_STEP_SUMMARY
+        echo "> To perform actual cleanup, run the 'Cleanup Old Packages' workflow." >> $GITHUB_STEP_SUMMARY

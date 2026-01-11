@@ -13,6 +13,10 @@ This repository contains the `feelpp-aptly-publisher` tool for publishing Debian
   - [Quick Start](#quick-start)
   - [Publishing to Different Channels](#publishing-to-different-channels)
   - [Multi-Component Support](#multi-component-support)
+- [Repository Cleanup](#repository-cleanup)
+  - [Cleanup Commands](#cleanup-commands)
+  - [Retention Policies](#retention-policies)
+  - [Automated Cleanup Workflows](#automated-cleanup-workflows)
 - [Installation](#installation)
 - [Development](#development)
 - [Testing](#testing)
@@ -171,6 +175,171 @@ feelpp-apt-publish \
   --keyid ABCD1234 \
   --debs ./debs/
 ```
+
+## Repository Cleanup
+
+The publisher includes tools for cleaning up old packages, particularly pre-release versions (alpha, beta, rc) that accumulate over time.
+
+### Cleanup Commands
+
+#### Analyze (Dry Run)
+
+Analyze the repository to see what packages would be cleaned up:
+
+```bash
+# Analyze all channels
+feelpp-apt-publish analyze --repo-path ./apt-repo
+
+# Analyze specific channel
+feelpp-apt-publish analyze --repo-path ./apt-repo --channels testing,pr
+
+# Custom age limit (default: 90 days)
+feelpp-apt-publish analyze --repo-path ./apt-repo --max-age-days 60
+
+# Output as JSON for CI integration
+feelpp-apt-publish analyze --repo-path ./apt-repo --json --output report.json
+```
+
+#### Cleanup (Execute)
+
+Actually delete old packages:
+
+```bash
+# Preview what would be deleted (default: dry-run mode)
+feelpp-apt-publish cleanup --repo-path ./apt-repo
+
+# Execute cleanup
+feelpp-apt-publish cleanup --repo-path ./apt-repo --execute
+
+# Cleanup with custom age limit
+feelpp-apt-publish cleanup --repo-path ./apt-repo --execute --max-age-days 60
+
+# Cleanup specific channels only
+feelpp-apt-publish cleanup --repo-path ./apt-repo --execute --channels pr
+```
+
+### Retention Policies
+
+Configure how packages are retained using a policy file:
+
+```bash
+# Create a default policy configuration
+feelpp-apt-publish init-policy --output retention-policy.json
+
+# Use custom policy
+feelpp-apt-publish cleanup --repo-path ./apt-repo --policy retention-policy.json
+```
+
+**Default policy file: [`retention-policy.json`](./retention-policy.json)**
+
+```json
+{
+  "prerelease_max_age_days": 90,
+  "max_versions_per_package": 0,
+  "channel_policies": {
+    "stable": {
+      "keep_prereleases": true,
+      "max_versions": 0
+    },
+    "testing": {
+      "keep_prereleases": false,
+      "max_versions": 5
+    },
+    "pr": {
+      "keep_prereleases": false,
+      "max_versions": 3,
+      "max_age_days": 30
+    }
+  },
+  "protected_components": [],
+  "protected_packages": []
+}
+```
+
+**Policy Settings:**
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `prerelease_max_age_days` | Max age for pre-release packages | 90 |
+| `max_versions_per_package` | Keep N latest versions (0=unlimited) | 0 |
+| `keep_prereleases` | Whether to keep pre-releases in channel | varies |
+| `protected_components` | Components to never clean | [] |
+| `protected_packages` | Package name patterns to never clean | [] |
+
+### Automated Cleanup Workflows
+
+The repository includes GitHub Actions workflows for automated cleanup:
+
+#### 1. Cleanup Analysis (Weekly Dry Run)
+
+**Workflow**: `.github/workflows/cleanup-dry-run.yml`
+
+Runs weekly (Sunday 3 AM UTC) to analyze what could be cleaned:
+
+```yaml
+# Manual trigger with custom settings
+gh workflow run "Cleanup Analysis (Dry Run)" \
+  -f max-age-days=60 \
+  -f channel=testing \
+  -f include-stable-prereleases=false
+```
+
+#### 2. Cleanup Old Packages (Monthly)
+
+**Workflow**: `.github/workflows/cleanup.yml`
+
+Runs monthly (1st of month, 4 AM UTC) to clean old pre-releases:
+
+```yaml
+# Manual trigger
+gh workflow run "Cleanup Old Packages" \
+  -f max-age-days=90 \
+  -f channel=all \
+  -f dry-run=false
+
+# Preview mode (dry run)
+gh workflow run "Cleanup Old Packages" \
+  -f dry-run=true
+```
+
+#### 3. PR Channel Auto-Cleanup (Weekly)
+
+**Workflow**: `.github/workflows/cleanup-pr-channel.yml`
+
+Specifically cleans the PR channel (packages from closed PRs):
+
+- Runs weekly (Monday 5 AM UTC)
+- Removes packages older than 30 days
+- Can be triggered when a PR is closed via `repository_dispatch`
+
+```yaml
+# Trigger cleanup for a specific closed PR
+curl -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  https://api.github.com/repos/feelpp/apt/dispatches \
+  -d '{"event_type":"pr-closed","client_payload":{"pr_number":"123"}}'
+```
+
+### What Gets Cleaned
+
+**Pre-release versions** matching these patterns:
+- `~alpha`, `~beta`, `~rc1`, `~pre`, `~dev`
+- `~git`, `~svn`, `~bzr`
+- `+git20231015`, `+svn1234`
+- `alpha1`, `beta2`, `rc3`
+
+**Version limits** (when configured):
+- Excess versions beyond `max_versions` setting
+- Oldest versions removed first (keeping newest)
+
+**Channel-specific defaults:**
+
+| Channel | Keep Pre-releases | Max Age | Max Versions |
+|---------|-------------------|---------|--------------|
+| stable | Yes | - | unlimited |
+| testing | No | 90 days | 5 |
+| pr | No | 30 days | 3 |
 
 ## Installation
 
