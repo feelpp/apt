@@ -16,12 +16,19 @@ from .publisher import AptlyPublisher
 from .cleaner import AptlyCleaner, RetentionPolicy
 
 
+class RequireKeyidWithSign(argparse.Action):
+    """Custom action to ensure --keyid is provided when --sign is used."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # For store_true behavior with nargs=0, values will be None
+        setattr(namespace, self.dest, True)
+        # Check if --keyid is not set
+        if not getattr(namespace, "keyid", None):
+            parser.error("--keyid is required when --sign is used")
+
+
 def cmd_publish(args):
     """Handle the publish command."""
-    if args.sign and not args.keyid:
-        print("Error: --keyid is required when --sign is used", file=sys.stderr)
-        sys.exit(1)
-
     try:
         publisher = AptlyPublisher(
             component=args.component,
@@ -370,7 +377,9 @@ def add_publish_arguments(parser):
     )
     parser.add_argument(
         "--sign",
-        action="store_true",
+        action=RequireKeyidWithSign,
+        nargs=0,
+        default=False,
         help="sign the publication with GPG",
     )
     parser.add_argument(

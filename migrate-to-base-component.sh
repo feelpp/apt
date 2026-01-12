@@ -56,18 +56,18 @@ fi
 # Ensure we have the publisher available
 echo ""
 echo "=== Checking requirements ==="
-if ! command -v feelpp-aptly-publisher &> /dev/null; then
-    echo "ERROR: feelpp-aptly-publisher not found"
+if ! command -v feelpp-apt-publish &> /dev/null; then
+    echo "ERROR: feelpp-apt-publish not found"
     echo "Installing from local source..."
     cd /nvme0/prudhomm/Devel/feelpp.quickfix/apt
-    pip install -e . --quiet
-    if ! command -v feelpp-aptly-publisher &> /dev/null; then
-        echo "ERROR: Failed to install feelpp-aptly-publisher"
+    uv pip install -e . --quiet
+    if ! command -v feelpp-apt-publish &> /dev/null; then
+        echo "ERROR: Failed to install feelpp-apt-publish"
         exit 1
     fi
 fi
 
-echo "✓ feelpp-aptly-publisher available"
+echo "✓ feelpp-apt-publish available"
 
 # Check if we need to download existing packages
 echo ""
@@ -120,7 +120,7 @@ PARMMG_DEBS=$(ls *.deb 2>/dev/null | wc -l)
 echo "Found $PARMMG_DEBS parmmg .deb file(s)"
 
 # NAPP package
-NAPP_DEB="/nvme0/prudhomm/Devel/napp/debian/libnapp-dev_0.3-1feelpp1_all.deb"
+NAPP_DEB="/nvme0/prudhomm/Devel/libnapp-dev_0.3-1feelpp1_all.deb"
 if [ ! -f "$NAPP_DEB" ]; then
     echo ""
     echo "Building napp package..."
@@ -131,6 +131,8 @@ if [ ! -f "$NAPP_DEB" ]; then
         echo "ERROR: debian/build-deb.sh not found"
         exit 1
     fi
+    # Check again after build (dpkg-buildpackage creates it in parent dir)
+    NAPP_DEB="/nvme0/prudhomm/Devel/libnapp-dev_0.3-1feelpp1_all.deb"
 fi
 
 if [ -f "$NAPP_DEB" ]; then
