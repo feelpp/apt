@@ -63,20 +63,20 @@ def cmd_cleanup(args):
             policy = RetentionPolicy.from_file(Path(args.policy))
         else:
             # Check for include_stable_prereleases attribute
-            include_stable = getattr(args, 'include_stable_prereleases', False)
+            include_stable = getattr(args, "include_stable_prereleases", False)
             channel_policies = {
-                'stable': {
-                    'keep_prereleases': not include_stable,
-                    'max_versions': 0,
+                "stable": {
+                    "keep_prereleases": not include_stable,
+                    "max_versions": 0,
                 },
-                'testing': {
-                    'keep_prereleases': False,
-                    'max_versions': args.max_versions if args.max_versions > 0 else 5,
+                "testing": {
+                    "keep_prereleases": False,
+                    "max_versions": args.max_versions if args.max_versions > 0 else 5,
                 },
-                'pr': {
-                    'keep_prereleases': False,
-                    'max_versions': args.max_versions if args.max_versions > 0 else 3,
-                    'max_age_days': 30,
+                "pr": {
+                    "keep_prereleases": False,
+                    "max_versions": args.max_versions if args.max_versions > 0 else 3,
+                    "max_age_days": 30,
                 },
             }
             policy = RetentionPolicy(
@@ -92,7 +92,7 @@ def cmd_cleanup(args):
         )
 
         # Parse channels
-        channels = args.channels.split(',') if args.channels else None
+        channels = args.channels.split(",") if args.channels else None
 
         # Find candidates
         packages = cleaner.scan_packages(channels)
@@ -115,10 +115,10 @@ def cmd_cleanup(args):
             print(f"  Space to reclaim: {report['summary']['total_size_mb']} MB")
             print()
 
-            for channel, pkgs in report['by_channel'].items():
+            for channel, pkgs in report["by_channel"].items():
                 if pkgs:
                     print(f"[{channel.upper()}] ({len(pkgs)} packages)")
-                    for pkg in sorted(pkgs, key=lambda x: (x['name'], x['version'])):
+                    for pkg in sorted(pkgs, key=lambda x: (x["name"], x["version"])):
                         print(f"  - {pkg['name']} {pkg['version']} ({pkg['arch']}) - {pkg['age_days']} days old")
                     print()
 
@@ -127,7 +127,7 @@ def cmd_cleanup(args):
             result = cleaner.cleanup(prerelease, version_limit, dry_run=False)
             print()
             print(f"Cleanup completed: {result['deleted_count']} packages deleted")
-            if result['failed_count'] > 0:
+            if result["failed_count"] > 0:
                 print(f"Failed to delete: {result['failed_count']} packages")
         else:
             print()
@@ -157,18 +157,18 @@ def cmd_analyze(args):
         else:
             # Build policy from command-line args
             channel_policies = {
-                'stable': {
-                    'keep_prereleases': not args.include_stable_prereleases,
-                    'max_versions': 0,
+                "stable": {
+                    "keep_prereleases": not args.include_stable_prereleases,
+                    "max_versions": 0,
                 },
-                'testing': {
-                    'keep_prereleases': False,
-                    'max_versions': args.max_versions if args.max_versions > 0 else 5,
+                "testing": {
+                    "keep_prereleases": False,
+                    "max_versions": args.max_versions if args.max_versions > 0 else 5,
                 },
-                'pr': {
-                    'keep_prereleases': False,
-                    'max_versions': args.max_versions if args.max_versions > 0 else 3,
-                    'max_age_days': 30,
+                "pr": {
+                    "keep_prereleases": False,
+                    "max_versions": args.max_versions if args.max_versions > 0 else 3,
+                    "max_age_days": 30,
                 },
             }
             policy = RetentionPolicy(
@@ -185,9 +185,9 @@ def cmd_analyze(args):
 
         # Parse channels
         if args.channels:
-            channels = args.channels.split(',')
+            channels = args.channels.split(",")
         else:
-            channels = ['stable', 'testing', 'pr']
+            channels = ["stable", "testing", "pr"]
 
         # Scan and find candidates
         packages = cleaner.scan_packages(channels)
@@ -203,45 +203,45 @@ def cmd_analyze(args):
         if args.json:
             # Enhanced JSON output for CI
             output = {
-                'summary': {
-                    'total_packages': len(packages),
-                    'total_size_mb': round(total_size / (1024 * 1024), 2),
-                    'cleanup_candidates': len(prerelease),
-                    'cleanup_size_mb': round(cleanup_size / (1024 * 1024), 2),
-                    'version_limit_candidates': len(version_limit),
+                "summary": {
+                    "total_packages": len(packages),
+                    "total_size_mb": round(total_size / (1024 * 1024), 2),
+                    "cleanup_candidates": len(prerelease),
+                    "cleanup_size_mb": round(cleanup_size / (1024 * 1024), 2),
+                    "version_limit_candidates": len(version_limit),
                 },
-                'cleanup_candidates': [
+                "cleanup_candidates": [
                     {
-                        'name': pkg.name,
-                        'version': pkg.version,
-                        'arch': pkg.arch,
-                        'channel': pkg.channel,
-                        'component': pkg.component,
-                        'path': str(pkg.path),
-                        'size': pkg.size,
-                        'age_days': pkg.age_days,
-                        'is_prerelease': pkg.is_prerelease,
+                        "name": pkg.name,
+                        "version": pkg.version,
+                        "arch": pkg.arch,
+                        "channel": pkg.channel,
+                        "component": pkg.component,
+                        "path": str(pkg.path),
+                        "size": pkg.size,
+                        "age_days": pkg.age_days,
+                        "is_prerelease": pkg.is_prerelease,
                     }
                     for pkg in prerelease
                 ],
-                'version_limit_candidates': [
+                "version_limit_candidates": [
                     {
-                        'name': pkg.name,
-                        'version': pkg.version,
-                        'arch': pkg.arch,
-                        'channel': pkg.channel,
-                        'component': pkg.component,
-                        'path': str(pkg.path),
-                        'size': pkg.size,
-                        'age_days': pkg.age_days,
+                        "name": pkg.name,
+                        "version": pkg.version,
+                        "arch": pkg.arch,
+                        "channel": pkg.channel,
+                        "component": pkg.component,
+                        "path": str(pkg.path),
+                        "size": pkg.size,
+                        "age_days": pkg.age_days,
                     }
                     for pkg in version_limit
                 ],
-                'config': {
-                    'max_age_days': args.max_age_days,
-                    'channels': channels,
-                    'include_stable_prereleases': args.include_stable_prereleases,
-                    'max_versions': args.max_versions,
+                "config": {
+                    "max_age_days": args.max_age_days,
+                    "channels": channels,
+                    "include_stable_prereleases": args.include_stable_prereleases,
+                    "max_versions": args.max_versions,
                 },
             }
             print(json.dumps(output, indent=2))
@@ -263,11 +263,14 @@ def cmd_analyze(args):
             print()
 
             if prerelease:
-                print(f"Pre-release Packages to Clean ({len(prerelease)} packages, {cleanup_size / (1024*1024):.2f} MB):")
+                print(
+                    f"Pre-release Packages to Clean ({len(prerelease)} packages, {cleanup_size / (1024*1024):.2f} MB):"
+                )
                 print("-" * 70)
 
                 # Group by channel
                 from collections import defaultdict
+
                 by_channel = defaultdict(list)
                 for pkg in prerelease:
                     by_channel[pkg.channel].append(pkg)
@@ -296,16 +299,16 @@ def cmd_analyze(args):
         # Write to output file if specified
         if args.output:
             output_path = Path(args.output)
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(report, f, indent=2, default=str)
             if not args.json:
                 print(f"\nReport saved to: {output_path}")
 
         # Output GitHub Actions format if requested
         if args.github_output:
-            github_output = os.environ.get('GITHUB_OUTPUT')
+            github_output = os.environ.get("GITHUB_OUTPUT")
             if github_output:
-                with open(github_output, 'a') as f:
+                with open(github_output, "a") as f:
                     f.write(f"total_packages={len(packages)}\n")
                     f.write(f"cleanup_count={len(prerelease)}\n")
                     f.write(f"cleanup_size_mb={round(cleanup_size / (1024*1024), 2)}\n")
@@ -440,12 +443,12 @@ Examples:
         version="%(prog)s 1.3.0",
     )
 
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Publish command
     publish_parser = subparsers.add_parser(
-        'publish',
-        help='Publish packages to APT repository',
+        "publish",
+        help="Publish packages to APT repository",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -464,8 +467,8 @@ Examples:
 
     # Cleanup command
     cleanup_parser = subparsers.add_parser(
-        'cleanup',
-        help='Analyze and clean up old packages',
+        "cleanup",
+        help="Analyze and clean up old packages",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -544,8 +547,8 @@ Examples:
 
     # Analyze command
     analyze_parser = subparsers.add_parser(
-        'analyze',
-        help='Analyze repository for cleanup candidates',
+        "analyze",
+        help="Analyze repository for cleanup candidates",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -622,8 +625,8 @@ Examples:
 
     # Init-policy command
     init_policy_parser = subparsers.add_parser(
-        'init-policy',
-        help='Create a default retention policy configuration',
+        "init-policy",
+        help="Create a default retention policy configuration",
     )
     init_policy_parser.add_argument(
         "--output",
@@ -640,14 +643,14 @@ Examples:
 
     # Handle backwards compatibility: if no command but --component provided, assume publish
     if args.command is None:
-        if hasattr(args, 'component') and args.component:
+        if hasattr(args, "component") and args.component:
             args.func = cmd_publish
         else:
             parser.print_help()
             sys.exit(0)
 
     # Call the appropriate command function
-    if hasattr(args, 'func'):
+    if hasattr(args, "func"):
         args.func(args)
     else:
         parser.print_help()

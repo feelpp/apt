@@ -28,21 +28,23 @@ class RetentionPolicy:
     max_versions_per_package: int = 0
 
     # Channels and their specific policies
-    channel_policies: Dict[str, dict] = field(default_factory=lambda: {
-        'stable': {
-            'keep_prereleases': True,  # Keep pre-releases in stable (they're intentional)
-            'max_versions': 0,  # Keep all versions
-        },
-        'testing': {
-            'keep_prereleases': False,  # Clean old pre-releases
-            'max_versions': 5,  # Keep last 5 versions
-        },
-        'pr': {
-            'keep_prereleases': False,  # Clean old pre-releases
-            'max_versions': 3,  # Keep last 3 versions
-            'max_age_days': 30,  # PR packages expire faster
-        },
-    })
+    channel_policies: Dict[str, dict] = field(
+        default_factory=lambda: {
+            "stable": {
+                "keep_prereleases": True,  # Keep pre-releases in stable (they're intentional)
+                "max_versions": 0,  # Keep all versions
+            },
+            "testing": {
+                "keep_prereleases": False,  # Clean old pre-releases
+                "max_versions": 5,  # Keep last 5 versions
+            },
+            "pr": {
+                "keep_prereleases": False,  # Clean old pre-releases
+                "max_versions": 3,  # Keep last 3 versions
+                "max_age_days": 30,  # PR packages expire faster
+            },
+        }
+    )
 
     # Components to exclude from cleanup
     protected_components: List[str] = field(default_factory=list)
@@ -53,33 +55,33 @@ class RetentionPolicy:
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
         return {
-            'prerelease_max_age_days': self.prerelease_max_age_days,
-            'max_versions_per_package': self.max_versions_per_package,
-            'channel_policies': self.channel_policies,
-            'protected_components': self.protected_components,
-            'protected_packages': self.protected_packages,
+            "prerelease_max_age_days": self.prerelease_max_age_days,
+            "max_versions_per_package": self.max_versions_per_package,
+            "channel_policies": self.channel_policies,
+            "protected_components": self.protected_components,
+            "protected_packages": self.protected_packages,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'RetentionPolicy':
+    def from_dict(cls, data: dict) -> "RetentionPolicy":
         """Create from dictionary."""
         return cls(
-            prerelease_max_age_days=data.get('prerelease_max_age_days', 90),
-            max_versions_per_package=data.get('max_versions_per_package', 0),
-            channel_policies=data.get('channel_policies', cls().channel_policies),
-            protected_components=data.get('protected_components', []),
-            protected_packages=data.get('protected_packages', []),
+            prerelease_max_age_days=data.get("prerelease_max_age_days", 90),
+            max_versions_per_package=data.get("max_versions_per_package", 0),
+            channel_policies=data.get("channel_policies", cls().channel_policies),
+            protected_components=data.get("protected_components", []),
+            protected_packages=data.get("protected_packages", []),
         )
 
     @classmethod
-    def from_file(cls, path: Path) -> 'RetentionPolicy':
+    def from_file(cls, path: Path) -> "RetentionPolicy":
         """Load retention policy from JSON file."""
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             return cls.from_dict(json.load(f))
 
     def save(self, path: Path) -> None:
         """Save retention policy to JSON file."""
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=2)
 
 
@@ -122,17 +124,11 @@ class DebianVersionCompare:
         """
         try:
             # Try using dpkg for accurate comparison
-            result = subprocess.run(
-                ['dpkg', '--compare-versions', v1, 'lt', v2],
-                capture_output=True
-            )
+            result = subprocess.run(["dpkg", "--compare-versions", v1, "lt", v2], capture_output=True)
             if result.returncode == 0:
                 return -1
 
-            result = subprocess.run(
-                ['dpkg', '--compare-versions', v1, 'gt', v2],
-                capture_output=True
-            )
+            result = subprocess.run(["dpkg", "--compare-versions", v1, "gt", v2], capture_output=True)
             if result.returncode == 0:
                 return 1
 
@@ -149,6 +145,7 @@ class DebianVersionCompare:
     def sort_versions(versions: List[str], reverse: bool = False) -> List[str]:
         """Sort a list of Debian versions."""
         from functools import cmp_to_key
+
         return sorted(versions, key=cmp_to_key(DebianVersionCompare.compare), reverse=reverse)
 
 
@@ -157,20 +154,20 @@ class AptlyCleaner:
 
     # Pre-release version patterns (Debian conventions)
     PRERELEASE_PATTERNS = [
-        r'~alpha\d*',
-        r'~beta\d*',
-        r'~rc\d*',
-        r'~pre\d*',
-        r'~dev',
-        r'~git\d*',
-        r'~svn\d*',
-        r'~bzr\d*',
-        r'\+git\d{8}',
-        r'\+svn\d+',
-        r'alpha\d+',
-        r'beta\d+',
-        r'rc\d+',
-        r'\.0~',  # Sometimes used for pre-releases
+        r"~alpha\d*",
+        r"~beta\d*",
+        r"~rc\d*",
+        r"~pre\d*",
+        r"~dev",
+        r"~git\d*",
+        r"~svn\d*",
+        r"~bzr\d*",
+        r"\+git\d{8}",
+        r"\+svn\d+",
+        r"alpha\d+",
+        r"beta\d+",
+        r"rc\d+",
+        r"\.0~",  # Sometimes used for pre-releases
     ]
 
     def __init__(
@@ -197,10 +194,7 @@ class AptlyCleaner:
         )
         self.logger = logging.getLogger(__name__)
 
-        self._prerelease_re = re.compile(
-            '|'.join(self.PRERELEASE_PATTERNS),
-            re.IGNORECASE
-        )
+        self._prerelease_re = re.compile("|".join(self.PRERELEASE_PATTERNS), re.IGNORECASE)
 
     def is_prerelease(self, version: str) -> bool:
         """Check if a version string indicates a pre-release."""
@@ -209,12 +203,12 @@ class AptlyCleaner:
     def parse_deb_filename(self, filename: str) -> Optional[Dict[str, str]]:
         """Parse Debian package filename into components."""
         # Format: name_version_arch.deb
-        match = re.match(r'^(.+)_([^_]+)_([^_]+)\.deb$', filename)
+        match = re.match(r"^(.+)_([^_]+)_([^_]+)\.deb$", filename)
         if match:
             return {
-                'name': match.group(1),
-                'version': match.group(2),
-                'arch': match.group(3),
+                "name": match.group(1),
+                "version": match.group(2),
+                "arch": match.group(3),
             }
         return None
 
@@ -229,18 +223,18 @@ class AptlyCleaner:
             List of PackageInfo objects
         """
         if channels is None:
-            channels = ['stable', 'testing', 'pr']
+            channels = ["stable", "testing", "pr"]
 
         packages = []
 
         for channel in channels:
-            pool_dir = self.repo_path / channel / 'pool'
+            pool_dir = self.repo_path / channel / "pool"
             if not pool_dir.exists():
                 self.logger.debug("Channel %s has no pool directory", channel)
                 continue
 
             # Pool structure: pool/<component>/<first-letter>/<package-name>/<files>
-            for deb_file in pool_dir.rglob('*.deb'):
+            for deb_file in pool_dir.rglob("*.deb"):
                 parsed = self.parse_deb_filename(deb_file.name)
                 if not parsed:
                     self.logger.warning("Could not parse filename: %s", deb_file.name)
@@ -248,23 +242,23 @@ class AptlyCleaner:
 
                 # Extract component from path
                 relative = deb_file.relative_to(pool_dir)
-                component = relative.parts[0] if relative.parts else 'unknown'
+                component = relative.parts[0] if relative.parts else "unknown"
 
                 # Get file stats
                 stat = deb_file.stat()
                 age = datetime.now() - datetime.fromtimestamp(stat.st_mtime)
 
                 pkg = PackageInfo(
-                    name=parsed['name'],
-                    version=parsed['version'],
-                    arch=parsed['arch'],
+                    name=parsed["name"],
+                    version=parsed["version"],
+                    arch=parsed["arch"],
                     filename=deb_file.name,
                     path=deb_file,
                     channel=channel,
                     component=component,
                     size=stat.st_size,
                     age_days=age.days,
-                    is_prerelease=self.is_prerelease(parsed['version']),
+                    is_prerelease=self.is_prerelease(parsed["version"]),
                 )
                 packages.append(pkg)
 
@@ -298,12 +292,12 @@ class AptlyCleaner:
             key = (pkg.channel, pkg.component, pkg.name, pkg.arch)
             package_groups[key].append(pkg)
 
-        for (channel, component, name, arch), group in package_groups.items():
+        for (channel, component, name, _arch), group in package_groups.items():
             # Get channel-specific policy
             channel_policy = self.policy.channel_policies.get(channel, {})
-            keep_prereleases = channel_policy.get('keep_prereleases', True)
-            max_versions = channel_policy.get('max_versions', self.policy.max_versions_per_package)
-            max_age = channel_policy.get('max_age_days', self.policy.prerelease_max_age_days)
+            keep_prereleases = channel_policy.get("keep_prereleases", True)
+            max_versions = channel_policy.get("max_versions", self.policy.max_versions_per_package)
+            max_age = channel_policy.get("max_age_days", self.policy.prerelease_max_age_days)
 
             # Check protected components
             if component in self.policy.protected_components:
@@ -321,18 +315,13 @@ class AptlyCleaner:
                     if pkg.is_prerelease and pkg.age_days > max_age:
                         prerelease_candidates.append(pkg)
                         self.logger.debug(
-                            "Pre-release candidate: %s %s (%d days old)",
-                            pkg.name, pkg.version, pkg.age_days
+                            "Pre-release candidate: %s %s (%d days old)", pkg.name, pkg.version, pkg.age_days
                         )
 
             # Apply version limits
             if max_versions > 0 and len(group) > max_versions:
                 # Sort by version (newest first)
-                sorted_group = sorted(
-                    group,
-                    key=lambda p: p.version,
-                    reverse=True
-                )
+                sorted_group = sorted(group, key=lambda p: p.version, reverse=True)
                 # Try to use dpkg for proper sorting
                 try:
                     versions = [p.version for p in group]
@@ -348,13 +337,13 @@ class AptlyCleaner:
                     if pkg not in prerelease_candidates:
                         version_limit_candidates.append(pkg)
                         self.logger.debug(
-                            "Version limit candidate: %s %s (keeping %d versions)",
-                            pkg.name, pkg.version, max_versions
+                            "Version limit candidate: %s %s (keeping %d versions)", pkg.name, pkg.version, max_versions
                         )
 
         self.logger.info(
             "Found %d pre-release candidates, %d version-limit candidates",
-            len(prerelease_candidates), len(version_limit_candidates)
+            len(prerelease_candidates),
+            len(version_limit_candidates),
         )
 
         return prerelease_candidates, version_limit_candidates
@@ -372,28 +361,30 @@ class AptlyCleaner:
         # Group by channel
         by_channel = defaultdict(list)
         for pkg in all_candidates:
-            by_channel[pkg.channel].append({
-                'name': pkg.name,
-                'version': pkg.version,
-                'arch': pkg.arch,
-                'component': pkg.component,
-                'size': pkg.size,
-                'age_days': pkg.age_days,
-                'is_prerelease': pkg.is_prerelease,
-                'path': str(pkg.path),
-            })
+            by_channel[pkg.channel].append(
+                {
+                    "name": pkg.name,
+                    "version": pkg.version,
+                    "arch": pkg.arch,
+                    "component": pkg.component,
+                    "size": pkg.size,
+                    "age_days": pkg.age_days,
+                    "is_prerelease": pkg.is_prerelease,
+                    "path": str(pkg.path),
+                }
+            )
 
         return {
-            'summary': {
-                'total_candidates': len(all_candidates),
-                'prerelease_candidates': len(prerelease_candidates),
-                'version_limit_candidates': len(version_limit_candidates),
-                'total_size_bytes': total_size,
-                'total_size_mb': round(total_size / (1024 * 1024), 2),
+            "summary": {
+                "total_candidates": len(all_candidates),
+                "prerelease_candidates": len(prerelease_candidates),
+                "version_limit_candidates": len(version_limit_candidates),
+                "total_size_bytes": total_size,
+                "total_size_mb": round(total_size / (1024 * 1024), 2),
             },
-            'by_channel': dict(by_channel),
-            'policy': self.policy.to_dict(),
-            'generated_at': datetime.now().isoformat(),
+            "by_channel": dict(by_channel),
+            "policy": self.policy.to_dict(),
+            "generated_at": datetime.now().isoformat(),
         }
 
     def cleanup(
@@ -444,14 +435,14 @@ class AptlyCleaner:
 
                 except Exception as e:
                     self.logger.error("Failed to delete %s: %s", pkg.path, e)
-                    failed.append({'path': str(pkg.path), 'error': str(e)})
+                    failed.append({"path": str(pkg.path), "error": str(e)})
 
         return {
-            'dry_run': dry_run,
-            'deleted_count': len(deleted),
-            'failed_count': len(failed),
-            'deleted': deleted,
-            'failed': failed,
+            "dry_run": dry_run,
+            "deleted_count": len(deleted),
+            "failed_count": len(failed),
+            "deleted": deleted,
+            "failed": failed,
         }
 
     def regenerate_metadata(self, channels: Optional[List[str]] = None) -> None:
@@ -465,15 +456,14 @@ class AptlyCleaner:
             channels: Channels to regenerate (default: all modified)
         """
         if channels is None:
-            channels = ['stable', 'testing', 'pr']
+            channels = ["stable", "testing", "pr"]
 
-        self.logger.info("Regenerating repository metadata for channels: %s", ', '.join(channels))
+        self.logger.info("Regenerating repository metadata for channels: %s", ", ".join(channels))
 
         # This is a placeholder - actual implementation would use aptly
         # to republish the repository with updated metadata
         self.logger.warning(
-            "Metadata regeneration requires running the publisher tool "
-            "to republish affected distributions"
+            "Metadata regeneration requires running the publisher tool " "to republish affected distributions"
         )
 
 
@@ -494,7 +484,7 @@ def find_pr_cleanup_candidates(
         List of packages to clean
     """
     cleaner = AptlyCleaner(repo_path)
-    packages = cleaner.scan_packages(channels=['pr'])
+    packages = cleaner.scan_packages(channels=["pr"])
 
     candidates = []
 
@@ -508,7 +498,7 @@ def find_pr_cleanup_candidates(
         # This is a placeholder for more sophisticated PR tracking
         if closed_prs:
             # Extract PR number from version if encoded (e.g., 1.0.0~pr123)
-            pr_match = re.search(r'pr(\d+)', pkg.version, re.IGNORECASE)
+            pr_match = re.search(r"pr(\d+)", pkg.version, re.IGNORECASE)
             if pr_match:
                 pr_num = int(pr_match.group(1))
                 if pr_num in closed_prs:
