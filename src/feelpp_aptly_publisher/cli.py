@@ -17,19 +17,27 @@ from .cleaner import AptlyCleaner, RetentionPolicy
 
 
 class RequireKeyidWithSign(argparse.Action):
-    """Custom action to ensure --keyid is provided when --sign is used."""
+    """Custom action to ensure --keyid is provided when --sign is used.
+
+    Note: The validation is deferred to after parsing to avoid issues
+    with subcommand parsing order.
+    """
 
     def __call__(self, parser, namespace, values, option_string=None):
         # For store_true behavior with nargs=0, values will be None
         setattr(namespace, self.dest, True)
-        # Check if --keyid is not set
-        if not getattr(namespace, "keyid", None):
-            parser.error("--keyid is required when --sign is used")
+        # Mark that sign was used so we can validate later
+        setattr(namespace, "_sign_used", True)
 
 
 def cmd_publish(args):
     """Handle the publish command."""
     try:
+        # Validate --keyid requirement if --sign was used
+        if args.sign and not args.keyid:
+            print("Error: --keyid is required when --sign is used", file=sys.stderr)
+            sys.exit(2)
+
         publisher = AptlyPublisher(
             component=args.component,
             distro=args.distro,
