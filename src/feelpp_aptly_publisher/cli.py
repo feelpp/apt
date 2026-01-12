@@ -652,19 +652,18 @@ Examples:
     )
     init_policy_parser.set_defaults(func=cmd_init_policy)
 
-    # For backwards compatibility, also add publish arguments to main parser
-    # This allows: feelpp-apt-publish --component foo (without 'publish' subcommand)
-    add_publish_arguments(parser)
+    # Note: We do NOT add publish arguments to the main parser to avoid
+    # conflicts with subcommand parsing. Users must use the subcommand syntax:
+    # feelpp-apt-publish publish --component X
+    # instead of the legacy syntax:
+    # feelpp-apt-publish --component X
 
     args = parser.parse_args()
 
-    # Handle backwards compatibility: if no command but --component provided, assume publish
+    # Check if command was provided
     if args.command is None:
-        if hasattr(args, "component") and args.component:
-            args.func = cmd_publish
-        else:
-            parser.print_help()
-            sys.exit(0)
+        parser.print_help()
+        sys.exit(0)
 
     # Call the appropriate command function
     if hasattr(args, "func"):
