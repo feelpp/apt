@@ -7,11 +7,11 @@ Architecture: amd64
 Version: 0.12.0-1
 Depends: libfeelpp1 (>= 0.109), libc6, libgcc-s1, libstdc++6
 Filename: pool/ktirio-urban-building/k/ktirio-urban-building/ktirio-urban-building_0.12.0-1_amd64.deb
-Size: 24515100
-MD5sum: cd71cf93e24e16cb8f7aba15da4fdab8
-SHA1: 26398e9f5a165e51b43ef05b4914b58e27da8fc1
-SHA256: 3451c154087d5140dd59a0022c468a50fb490ba67982fa15c0d3e45c109ab35c
-SHA512: ebcc55ee28d6df51eebea5528e1097b0217f90f12767fb175ce23af820afc088e2bcb468ddaac185ed8ceef2259484abe195486909bc5af3ef5d92f18a7280d2
+Size: 24515104
+MD5sum: e1a23e672edb255cefcc25f8748916c1
+SHA1: 39ad5fdfdcc8e95f63f24a1c7874f1f350fe4c78
+SHA256: dbf84f49e10076e6bf33d4f2e07d475b8c946ef772eb6a535ac6e9b5228f8420
+SHA512: 4c724e7882146962bbb9946f75793a4fe1ed554f780c33e27be3b7921b80adf379ab6eba8857479b420f3ca18c35674fd643ac4715da9a30ddd727f7059ffd50
 Description: Cemosis ktirio-urban-building template application
  Cemosis provides a Feel++ template application.
 Homepage: https://github.com/feelpp/ktirio-urban-building
